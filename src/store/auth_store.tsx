@@ -155,6 +155,7 @@ export const useAuthStore = create<AuthStore>()(
                     })
 
                 } catch (error) {
+                    console.log('Token refresh failed:', error);
                     //if user fails, logout user
                     get().logout();
                 }
@@ -176,7 +177,7 @@ export const useAuthStore = create<AuthStore>()(
 );
 
 //selector
-export const userUser = () => useAuthStore((state) => state.user);
+export const useUser = () => useAuthStore((state) => state.user);
 export const useIsAuth = () => useAuthStore((state) => state.isAuth);
 export const useAuthError = () => useAuthStore((state) => state.error);
 export const useAuthLoading = () => useAuthStore((state) => state.isLoading);

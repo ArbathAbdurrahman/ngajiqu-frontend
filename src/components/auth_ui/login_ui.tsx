@@ -4,12 +4,12 @@ import Link from "next/link";
 import { FilledButton } from "../global_ui/filled_button";
 import { MyTextField } from "../global_ui/my_text_field";
 import { MyCard } from "../global_ui/my_card";
-import { useAuthStore, userUser } from "@/store/auth_store";
+import { useAuthStore } from "@/store/auth_store";
 import React, { useState } from "react";
 
 export function LoginUI() {
-    const { login, isLoading, error, clearErorr } = useAuthStore();
-    const user = userUser();
+    const { login, isLoading, clearErorr } = useAuthStore();
+    // const user = userUser();
 
     const [authData, setAuthData] = useState<{ email: string, password: string }>({
         email: "",
