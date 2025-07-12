@@ -29,7 +29,7 @@ export function LoginUI() {
                 {/* <Link href={"/"}>
                         <Image src={"/logo.svg"} alt="logo" width={33} height={33} className="w-[33px] h-[33px]" />
                     </Link> */}
-                <h1 className="text-lg font-semibold text-[#1F2937]">Login ke KOPKAS</h1>
+                <h1 className="text-xl font-semibold">Login ke NgajiQu</h1>
             </div>
             <form
                 onSubmit={handleLogin}
@@ -61,7 +61,6 @@ export function LoginUI() {
                     isLoading={isLoading}
                     type="submit"
                     width="w-full"
-                    bgColor="bg-[#5C8D89]"
                 >
                     Login
                 </FilledButton>
@@ -72,9 +71,8 @@ export function LoginUI() {
                     className="font-medium"
                 >
                     Belum memiliki akun?
-                    <Link href="/register" className="text-[#3CB371]"> Register</Link>
+                    <Link href="/register" className="text-[#388E3C]"> Register</Link>
                 </p>
-                <Link href="login/forget" className="text-[#3CB371] font-medium">Lupa password?</Link>
             </div>
         </MyCard>
 

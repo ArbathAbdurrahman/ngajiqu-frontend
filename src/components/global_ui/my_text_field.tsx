@@ -28,7 +28,7 @@ export function MyTextField({ title, type, placeholder, bgColor, value, required
                     value={value}
                     required={required}
                     onChange={onChange}
-                    className={clsx("border-[1px] h-[50px] w-full placeholder:font-medium rounded-md focus:border-[#74B49B]  border-[#3CB37133] px-2 py-1 outline-none", bgColor)}
+                    className={clsx("border-[1px] h-[50px] w-full placeholder:font-medium rounded-md focus:border-[#74B49B]  border-[#C8B560] px-2 py-1 outline-none", bgColor)}
                 />
                 {isPassword && (
                     <button
