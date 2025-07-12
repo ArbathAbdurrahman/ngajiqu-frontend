@@ -52,7 +52,7 @@ export function RegisterUI() {
                 {/* <Link href={"/"}>
                     <Image src={"/logo.svg"} alt="logo" width={33} height={33} className="w-[33px] h-[33px]" />
                 </Link> */}
-                <h1 className="text-3xl font-semibold text-[#1F2937]">Daftar ke KOPKAS</h1>
+                <h1 className="text-xl font-semibold">Daftar ke NgajiQu</h1>
             </div>
             <form onSubmit={handleRegister} className="flex flex-col gap-4 sm:w-[400px] w-[290px]">
                 <MyTextField
@@ -121,8 +121,6 @@ export function RegisterUI() {
                     isLoading={isLoading}
                     width='w-full'
                     type="submit"
-                    bgColor="bg-[#5C8D89]"
-
                 >
                     Register
                 </FilledButton>
@@ -130,7 +128,7 @@ export function RegisterUI() {
 
             <div className="flex flex-col gap-3 justify-center items-center">
                 <p className="font-medium">
-                    Sudah memiliki akun? <Link href="/login" className="text-[#3CB371]">Login</Link>
+                    Sudah memiliki akun? <Link href="/login" className="text-[#388E3C]">Login</Link>
                 </p>
             </div>
         </MyCard>

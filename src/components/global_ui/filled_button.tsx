@@ -12,7 +12,7 @@ interface FilledButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     paddingy?: string;
 }
 
-export function FilledButton({ children, isLoading, bgColor = "bg-[#74B49B]", color = "text-white", paddingx = "px-6", paddingy = "py-2", width = "w-auto", ...rest }: FilledButtonProps) {
+export function FilledButton({ children, isLoading, bgColor = "bg-[#4CAF50]", color = "text-white", paddingx = "px-6", paddingy = "py-2", width = "w-auto", ...rest }: FilledButtonProps) {
     return (
         <button
             className={clsx(
