@@ -1,0 +1,58 @@
+'use client'
+
+import { MyTabs } from "@/components/global_ui/my_tabs";
+import { PlusButton } from "@/components/global_ui/plus_button";
+import SearchInput from "@/components/global_ui/search_input";
+import { AktivitasBuilder } from "@/components/kelas_ui/aktivitas_builder";
+import { SantriBuilder } from "@/components/kelas_ui/santri_builder";
+import React from "react";
+
+export default function Page() {
+    const [activeTab, setActiveTab] = React.useState("aktivitas");
+
+    const tabItems = [
+        { label: "Aktivitas", value: "aktivitas" },
+        { label: "Santri", value: "santri" }
+    ]
+
+    return (
+        <div className="bg-[#E8F5E9]">
+            <div className="w-full sticky top-[62px] z-30">
+                <MyTabs
+                    tabs={tabItems}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    activeColor="#C8B560"
+                />
+
+                {activeTab === 'aktivitas' ? (
+                    <div className="w-full pt-4 pb-2 flex justify-end px-5 bg-[#E8F5E9]">
+                        <PlusButton
+                            title='Aktivitas Baru'
+                        />
+                    </div>
+                ) : (
+
+                    <div className="w-full pt-4 pb-2 flex gap-2 justify-end px-2.5 bg-[#E8F5E9]">
+                        <SearchInput className="flex flex-1" />
+                        <PlusButton
+                            title='Tambah Santri'
+                            className="flex flex-1"
+                        />
+                    </div>
+                )}
+
+
+            </div>
+
+            {/* Tab Content */}
+            <div className="flex flex-col min-h-screen gap-4 px-5 py-2">
+                {activeTab === 'aktivitas' ? (
+                    <AktivitasBuilder />
+                ) : (
+                    <SantriBuilder />
+                )}
+            </div>
+        </div>
+    )
+}
