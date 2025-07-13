@@ -1,55 +1,83 @@
 'use client'
 
 import { ChevronsUpDown } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import {
+    useKartuList,
+    useSelectedSantri,
+    useGetKartu,
+    useSortKartuByDate,
+    useSantriLoading,
+    useSantriError
+} from "@/store/santri_store";
 
 const TABLE_HEAD = ["Tanggal", "Jilid/Surat", "Hal/Ayat", "Pengampu", "Catatan"];
 
-const TABLE_ROWS = [
-    {
-        tanggal: "12/12/2025",
-        jilid: "Iqro' 3",
-        halaman: "15",
-        pengampu: "Ustadz Ahmad",
-        catatan: "Sudah lancar, bisa lanjut",
-    },
-    {
-        tanggal: "11/12/2025",
-        jilid: "Iqro' 3",
-        halaman: "14",
-        pengampu: "Ustadz Ahmad",
-        catatan: "Perlu pengulangan huruf hijaiyah",
-    },
-    {
-        tanggal: "10/12/2025",
-        jilid: "Al-Fatihah",
-        halaman: "1-7",
-        pengampu: "Ustadzah Fatimah",
-        catatan: "Bacaan tajwid perlu diperbaiki",
-    },
-    {
-        tanggal: "09/12/2025",
-        jilid: "Iqro' 2",
-        halaman: "25",
-        pengampu: "Ustadz Ahmad",
-        catatan: "Lulus ke Iqro' 3",
-    },
-    {
-        tanggal: "08/12/2025",
-        jilid: "Iqro' 2",
-        halaman: "24",
-        pengampu: "Ustadz Ahmad",
-        catatan: "Latihan membaca panjang pendek",
-    },
-];
-
 export function TableKartu() {
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [isClient, setIsClient] = useState(false);
+
+    // Global state selectors
+    const allKartuList = useKartuList();
+    const selectedSantri = useSelectedSantri();
+    const loading = useSantriLoading();
+    const error = useSantriError();
+
+    // Filter kartu for selected santri only
+    const kartuList = allKartuList.filter(kartu =>
+        selectedSantri?.id && kartu.idSantri === selectedSantri.id
+    );
+
+    // Actions
+    const getKartu = useGetKartu();
+    const sortKartuByDate = useSortKartuByDate();
+
+    // SSR safety
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    // Fetch kartu data when selectedSantri changes
+    useEffect(() => {
+        if (isClient && selectedSantri?.id) {
+            getKartu(selectedSantri.id);
+        }
+    }, [isClient, selectedSantri?.id, getKartu]);
 
     const handleDateSort = () => {
-        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-        // Add sorting logic here
+        const newSortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+        setSortOrder(newSortOrder);
+        sortKartuByDate(newSortOrder);
     };
+
+    // Don't render until client-side for SSR safety
+    if (!isClient) {
+        return <div>Loading...</div>;
+    }
+
+    if (!selectedSantri) {
+        return (
+            <div className="bg-white rounded-lg shadow-sm border border-[#C8B560] p-4 text-center">
+                <p className="text-gray-500">Pilih santri terlebih dahulu untuk melihat kartu ngaji</p>
+            </div>
+        );
+    }
+
+    if (loading) {
+        return (
+            <div className="bg-white rounded-lg shadow-sm border border-[#C8B560] p-4 text-center">
+                <p>Loading kartu data...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-white rounded-lg shadow-sm border border-[#C8B560] p-4 text-center">
+                <p className="text-red-500">Error: {error}</p>
+            </div>
+        );
+    }
 
 
     return (
@@ -98,25 +126,33 @@ export function TableKartu() {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {TABLE_ROWS.map(({ tanggal, jilid, halaman, pengampu, catatan }, index) => (
-                            <tr key={`${tanggal}-${index}`} className="hover:bg-gray-50">
-                                <td className="px-2 py-1.5 text-[10px] text-gray-900 w-[18%] align-top text-center">
-                                    <div className="break-words">{tanggal}</div>
-                                </td>
-                                <td className="px-2 py-1.5 text-[10px] text-gray-900 w-[20%] align-top text-center">
-                                    <div className="break-words">{jilid}</div>
-                                </td>
-                                <td className="px-2 py-1.5 text-[10px] text-gray-900 text-center w-[12%] align-top">
-                                    <div className="break-words">{halaman}</div>
-                                </td>
-                                <td className="px-2 py-1.5 text-[10px] text-gray-900 w-[20%] align-top text-center">
-                                    <div className="break-words">{pengampu}</div>
-                                </td>
-                                <td className="px-2 py-1.5 text-[10px] text-gray-900 w-[30%] align-top text-center">
-                                    <div className="break-words">{catatan}</div>
+                        {kartuList.length === 0 ? (
+                            <tr>
+                                <td colSpan={5} className="px-2 py-8 text-center text-gray-500">
+                                    Belum ada catatan ngaji untuk santri {selectedSantri.nama}
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            kartuList.map((kartu, index) => (
+                                <tr key={kartu.id} className="hover:bg-gray-50">
+                                    <td className="px-2 py-1.5 text-[10px] text-gray-900 w-[18%] align-top text-center">
+                                        <div className="break-words">{kartu.tanggal.toLocaleDateString('id-ID')}</div>
+                                    </td>
+                                    <td className="px-2 py-1.5 text-[10px] text-gray-900 w-[20%] align-top text-center">
+                                        <div className="break-words">{kartu.bab}</div>
+                                    </td>
+                                    <td className="px-2 py-1.5 text-[10px] text-gray-900 text-center w-[12%] align-top">
+                                        <div className="break-words">{kartu.halaman}</div>
+                                    </td>
+                                    <td className="px-2 py-1.5 text-[10px] text-gray-900 w-[20%] align-top text-center">
+                                        <div className="break-words">{kartu.pengampu}</div>
+                                    </td>
+                                    <td className="px-2 py-1.5 text-[10px] text-gray-900 w-[30%] align-top text-center">
+                                        <div className="break-words">{kartu.catatan || 'Tidak ada catatan'}</div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
