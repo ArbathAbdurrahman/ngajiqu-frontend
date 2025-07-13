@@ -101,7 +101,7 @@ interface KelasAction {
     getKelas: () => Promise<void>;
     getKelasById: (id: string) => Promise<void>;
     editKelas: (id: string, data: Partial<Kelas>) => Promise<void>;
-    deleteKelas: (id: string) => Promise<void>;
+    deleteKelas: (slug: string) => Promise<void>;
     setSelectedKelas: (kelas: Kelas | null) => void;
     clearSelectedKelas: () => void;
     setLoading: (loading: boolean) => void;
@@ -202,9 +202,9 @@ export const useKelasStore = create<KelasStore>((set, get) => ({
         try {
             set({ loading: true, error: null });
 
-            const headers = await getAuthHeaders();
-
-
+            const headers = {
+                'Content-Type': 'application/json',
+            };
 
             const response = await fetch(`${API_BASE_URL}/kelas/kelas`, {
                 method: 'GET',
@@ -251,7 +251,9 @@ export const useKelasStore = create<KelasStore>((set, get) => ({
         try {
             set({ loading: true, error: null });
 
-            const headers = await getAuthHeaders();
+            const headers = {
+                'Content-Type': 'application/json',
+            };
 
             const response = await fetch(`${API_BASE_URL}/kelas/${id}`, {
                 method: 'GET',
@@ -315,13 +317,13 @@ export const useKelasStore = create<KelasStore>((set, get) => ({
     },
 
     // Delete kelas
-    deleteKelas: async (id: string) => {
+    deleteKelas: async (slug: string) => {
         try {
             set({ loading: true, error: null });
 
             const headers = await getAuthHeaders();
 
-            const response = await fetch(`${API_BASE_URL}/kelas/${id}`, {
+            const response = await fetch(`${API_BASE_URL}/kelas/kelas/${slug}`, {
                 method: 'DELETE',
                 headers,
             });
@@ -331,8 +333,8 @@ export const useKelasStore = create<KelasStore>((set, get) => ({
             }
 
             set((state) => ({
-                kelasList: state.kelasList.filter((kelas) => kelas.id !== id),
-                selectedKelas: state.selectedKelas?.id === id ? null : state.selectedKelas,
+                kelasList: state.kelasList.filter((kelas) => kelas.slug !== slug),
+                selectedKelas: state.selectedKelas?.slug === slug ? null : state.selectedKelas,
                 loading: false,
             }));
 

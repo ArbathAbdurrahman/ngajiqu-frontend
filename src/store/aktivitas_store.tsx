@@ -116,7 +116,9 @@ export const useAktivitasStore = create<AktivitasStore>((set) => ({
         try {
             set({ loading: true, error: null });
 
-            const headers = await getAuthHeaders();
+            const headers = {
+                'Content-Type': 'application/json',
+            };
 
             // Build URL dengan atau tanpa filter kelas
             const url = `${API_BASE_URL}/kelas/kelas/${slug}/kegiatan/`;
@@ -170,7 +172,9 @@ export const useAktivitasStore = create<AktivitasStore>((set) => ({
         try {
             set({ loading: true, error: null });
 
-            const headers = await getAuthHeaders();
+            const headers = {
+                'Content-Type': 'application/json',
+            };
 
             const response = await fetch(`${API_BASE_URL}/kelas/kegiatan/${id}/`, {
                 method: 'GET',

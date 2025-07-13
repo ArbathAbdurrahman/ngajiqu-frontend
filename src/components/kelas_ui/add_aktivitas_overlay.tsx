@@ -9,7 +9,6 @@ import {
     useAddAktivitas,
     useAktivitasLoading,
     useAktivitasError,
-    useClearAktivitasError
 } from "@/store/aktivitas_store";
 import { useSelectedKelas } from "@/store/kelas_store";
 import { Message, useToaster } from "rsuite";
@@ -23,7 +22,6 @@ export function AddAktivitasOverlay() {
     const addAktivitas = useAddAktivitas();
     const loading = useAktivitasLoading();
     const error = useAktivitasError();
-    const clearError = useClearAktivitasError();
 
     const [formData, setFormData] = useState<{
         tanggal: Date;
@@ -153,7 +151,7 @@ export function AddAktivitasOverlay() {
                     <MyTextArea
                         title="Deskripsi"
                         required={false}
-                        placeholder="Masukkan deskripsi aktivitas (opsional)"
+                        placeholder="Masukkan deskripsi aktivitas"
                         onChange={(event) => {
                             setFormData({ ...formData, deskripsi: event.target.value });
                         }}

@@ -186,7 +186,9 @@ export const useSantriStore = create<SantriStore>((set, get) => ({
         try {
             set({ error: null });
 
-            const headers = await getAuthHeaders();
+            const headers = {
+                'Content-Type': 'application/json',
+            };
 
             const response = await fetch(`${API_BASE_URL}/kelas/kelas/${slug}/santri`, {
                 method: 'GET',
@@ -233,7 +235,9 @@ export const useSantriStore = create<SantriStore>((set, get) => ({
         try {
             set({ loading: true, error: null });
 
-            const headers = await getAuthHeaders();
+            const headers = {
+                'Content-Type': 'application/json',
+            };
 
             const response = await fetch(`${API_BASE_URL}/kelas/santri/${id}`, {
                 method: 'GET',
@@ -366,7 +370,9 @@ export const useSantriStore = create<SantriStore>((set, get) => ({
         try {
             set({ error: null });
 
-            const headers = await getAuthHeaders();
+            const headers = {
+                'Content-Type': 'application/json',
+            };
 
             const response = await fetch(`${API_BASE_URL}/kelas/santri/${santriId}/ngaji-records/`, {
                 method: 'GET',
@@ -436,7 +442,9 @@ export const useSantriStore = create<SantriStore>((set, get) => ({
         try {
             set({ loading: true, error: null });
 
-            const headers = await getAuthHeaders();
+            const headers = {
+                'Content-Type': 'application/json',
+            };
 
             const response = await fetch(`${API_BASE_URL}/kelas/ngaji/${id}`, {
                 method: 'GET',

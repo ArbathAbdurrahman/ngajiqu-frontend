@@ -10,6 +10,7 @@ import {
     useClearAktivitasError
 } from "@/store/aktivitas_store";
 import { useSelectedKelas } from "@/store/kelas_store";
+import { MyModal } from "@/components/global_ui/my_modal";
 
 export function AktivitasBuilder() {
     const toaster = useToaster();
@@ -19,6 +20,11 @@ export function AktivitasBuilder() {
 
     // State untuk mencegah hydration mismatch
     const [isClient, setIsClient] = useState(false);
+
+    // State untuk modal dan delete
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [aktivitasToDelete, setAktivitasToDelete] = useState<{ id: string, nama: string } | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Get aktivitas store data and actions
     const aktivitasList = useAktivitasList();
@@ -54,17 +60,28 @@ export function AktivitasBuilder() {
         };
     }, [clearError]);
 
-    const handleDeleteAktivitas = async (aktivitasId: string, aktivitasNama: string) => {
+    const handleDeleteClick = (aktivitasId: string, aktivitasNama: string) => {
+        setAktivitasToDelete({ id: aktivitasId, nama: aktivitasNama });
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!aktivitasToDelete) return;
+
+        setIsDeleting(true);
         try {
-            await deleteAktivitas(aktivitasId);
+            await deleteAktivitas(aktivitasToDelete.id);
 
             // Show success toast
             toaster.push(
                 <Message showIcon type="success" closable>
-                    <strong>Berhasil!</strong> Aktivitas "{aktivitasNama}" berhasil dihapus.
+                    <strong>Berhasil!</strong> Aktivitas "{aktivitasToDelete.nama}" berhasil dihapus.
                 </Message>,
                 { placement: 'topEnd' }
             );
+
+            setIsDeleteModalOpen(false);
+            setAktivitasToDelete(null);
         } catch (error) {
             // Show error toast
             toaster.push(
@@ -73,7 +90,14 @@ export function AktivitasBuilder() {
                 </Message>,
                 { placement: 'topEnd' }
             );
+        } finally {
+            setIsDeleting(false);
         }
+    };
+
+    const handleCancelDelete = () => {
+        setIsDeleteModalOpen(false);
+        setAktivitasToDelete(null);
     };
 
     // Show loading state
@@ -124,39 +148,61 @@ export function AktivitasBuilder() {
     }
 
     return (
-        <div className="space-y-4">
-            {aktivitasList.map((aktivitas) => (
-                <div key={aktivitas.id} className="flex flex-col w-full bg-white border-2 border-[#C8B560] rounded-xl overflow-clip">
-                    <div className="flex flex-row justify-between items-start">
-                        <div className="flex flex-col p-3">
-                            <h1 className="text-xl font-semibold">{aktivitas.kelas_nama}</h1>
-                            {/* Prevent hydration mismatch */}
-                            {isClient && selectedKelas?.deskripsi && (
-                                <p className="text-sm text-gray-600">{selectedKelas.deskripsi}</p>
-                            )}
+        <>
+            <div className="space-y-4">
+                {aktivitasList.map((aktivitas) => (
+                    <div key={aktivitas.id} className="flex flex-col w-full bg-white border-2 border-[#C8B560] rounded-xl overflow-clip">
+                        <div className="flex flex-row justify-between items-start">
+                            <div className="flex flex-col p-3">
+                                <h1 className="text-xl font-semibold">{aktivitas.kelas_nama}</h1>
+                                {/* Prevent hydration mismatch */}
+                                {isClient && selectedKelas?.deskripsi && (
+                                    <p className="text-sm text-gray-600">{selectedKelas.deskripsi}</p>
+                                )}
+                            </div>
+                            <IconButton
+                                appearance="subtle"
+                                className="z-0 m-2"
+                                icon={<Trash2 color="red" />}
+                                onClick={() => handleDeleteClick(aktivitas.id, aktivitas.nama)}
+                                loading={loading}
+                            />
                         </div>
-                        <IconButton
-                            appearance="subtle"
-                            className="z-0 m-2"
-                            icon={<Trash2 color="red" />}
-                            onClick={() => handleDeleteAktivitas(aktivitas.id, aktivitas.nama)}
-                            loading={loading}
-                        />
+                        <div className="flex flex-row bg-[#C8B560] p-3 justify-between">
+                            <div className="flex flex-col flex-1">
+                                <h3 className="font-semibold text-white">Kegiatan</h3>
+                                <p className="text-white">{aktivitas.tanggal}</p>
+                            </div>
+                            <div className="flex flex-col flex-1">
+                                <p className="text-xs font-semibold text-white">{aktivitas.nama}</p>
+                                {aktivitas.deskripsi && (
+                                    <p className="text-xs text-white/80 mt-1">{aktivitas.deskripsi}</p>
+                                )}
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex flex-row bg-[#C8B560] p-3 justify-between">
-                        <div className="flex flex-col flex-1">
-                            <h3 className="font-semibold text-white">Kegiatan</h3>
-                            <p className="text-white">{aktivitas.tanggal}</p>
-                        </div>
-                        <div className="flex flex-col flex-1">
-                            <p className="text-xs font-semibold text-white">{aktivitas.nama}</p>
-                            {aktivitas.deskripsi && (
-                                <p className="text-xs text-white/80 mt-1">{aktivitas.deskripsi}</p>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            ))}
-        </div>
+                ))}
+            </div>
+
+            {/* Delete Confirmation Modal */}
+            <MyModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                title="APAKAH ANDA YAKIN INGIN MENGHAPUS AKTIVITAS INI?"
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCancelDelete}
+                isLoading={isDeleting}
+                size="sm"
+                confirmText="IYA"
+                cancelText="TIDAK"
+                noteText="Note: Data aktivitas yang dihapus tidak bisa dikembalikan*"
+            >
+                {aktivitasToDelete && (
+                    <p className="text-center text-gray-700">
+                        Aktivitas: <strong>"{aktivitasToDelete.nama}"</strong>
+                    </p>
+                )}
+            </MyModal>
+        </>
     );
 }

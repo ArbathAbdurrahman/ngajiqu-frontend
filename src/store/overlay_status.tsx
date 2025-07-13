@@ -18,6 +18,12 @@ type OverlayKelasState = {
     close: () => void;
 };
 
+type OverlayEditKelasState = {
+    isOpen: boolean;
+    open: () => void;
+    close: () => void;
+};
+
 export const useOverlayAktivitas = create<OverlayAktivitasState>((set) => ({
     isOpen: false,
     open: () => set({ isOpen: true }),
@@ -31,6 +37,12 @@ export const useOverlaySantri = create<OverlaySantriState>((set) => ({
 }));
 
 export const useOverlayKelas = create<OverlayKelasState>((set) => ({
+    isOpen: false,
+    open: () => set({ isOpen: true }),
+    close: () => set({ isOpen: false }),
+}));
+
+export const useOverlayEditKelas = create<OverlayEditKelasState>((set) => ({
     isOpen: false,
     open: () => set({ isOpen: true }),
     close: () => set({ isOpen: false }),

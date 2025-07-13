@@ -15,10 +15,20 @@ export default function Page() {
     const { open: openSantri } = useOverlaySantri()
 
     const [activeTab, setActiveTab] = React.useState("aktivitas");
+    const [searchQuery, setSearchQuery] = React.useState("");
+
     const tabItems = [
         { label: "Aktivitas", value: "aktivitas" },
         { label: "Santri", value: "santri" }
     ]
+
+    const handleSearchChange = (query: string) => {
+        setSearchQuery(query);
+    };
+
+    const clearSearch = () => {
+        setSearchQuery("");
+    };
 
     return (
         <div className="bg-[#E8F5E9]">
@@ -45,7 +55,12 @@ export default function Page() {
                 ) : (
 
                     <div className="w-full pt-4 pb-2 flex gap-2 justify-end px-2.5 bg-[#E8F5E9]">
-                        <SearchInput className="flex flex-1" />
+                        <SearchInput
+                            className="flex flex-1"
+                            value={searchQuery}
+                            onChange={handleSearchChange}
+                            placeholder="Cari santri..."
+                        />
                         <PlusButton
                             title='Tambah Santri'
                             className="flex flex-1"
@@ -63,7 +78,10 @@ export default function Page() {
                 {activeTab === 'aktivitas' ? (
                     <AktivitasBuilder />
                 ) : (
-                    <SantriBuilder />
+                    <SantriBuilder
+                        searchQuery={searchQuery}
+                        onClearSearch={clearSearch}
+                    />
                 )}
             </div>
         </div>
