@@ -4,12 +4,18 @@ import Link from "next/link";
 import { FilledButton } from "../global_ui/filled_button";
 import { MyTextField } from "../global_ui/my_text_field";
 import { MyCard } from "../global_ui/my_card";
-import { useAuthStore } from "@/store/auth_store";
-import React, { useState } from "react";
+import { useAuthActions, useAuthError, useAuthLoading } from "@/store/auth_store";
+import React, { useState, useEffect } from "react";
+import { Message } from "rsuite";
+import { useGuestRoute } from "@/hooks/useAuthRedirect";
 
 export function RegisterUI() {
-    const { register, isLoading, clearErorr } = useAuthStore();
-    // const user = userUser();
+    const { register, clearError } = useAuthActions();
+    const isLoading = useAuthLoading();
+    const error = useAuthError();
+
+    // Redirect authenticated users to dashboard
+    useGuestRoute();
 
     const [authData, setAuthData] = useState<{ email: string, password: string, confirmPass: string, name: string }>({
         email: "",
@@ -23,10 +29,18 @@ export function RegisterUI() {
         password?: string
     }>({});
 
+    // Clear error when user starts typing
+    useEffect(() => {
+        if (error) {
+            clearError();
+        }
+    }, [authData.email, authData.password, authData.name]);
+
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
 
         setValidationErrors({});
+        clearError();
 
         const errors: { confirmPass?: string, password?: string } = {};
 
@@ -39,9 +53,10 @@ export function RegisterUI() {
         }
 
         await register({
+            username: authData.name,
             email: authData.email,
-            password: authData.password,
-            name: authData.name,
+            password1: authData.password,
+            password2: authData.confirmPass,
         });
     }
 
@@ -54,6 +69,15 @@ export function RegisterUI() {
                 </Link> */}
                 <h1 className="text-xl font-semibold">Daftar ke NgajiQu</h1>
             </div>
+
+            {error && (
+                <div className="w-full sm:w-[400px]">
+                    <Message type="error" showIcon>
+                        <strong>Error!</strong> {error}
+                    </Message>
+                </div>
+            )}
+
             <form onSubmit={handleRegister} className="flex flex-col gap-4 sm:w-[400px] w-[290px]">
                 <MyTextField
                     title="Email"
@@ -70,7 +94,7 @@ export function RegisterUI() {
                     placeholder="Buat Username"
                     onChange={(event) => {
                         setAuthData({ ...authData, name: event.target.value })
-                        clearErorr();
+                        clearError();
                     }}
                     value={authData.name}
                 />
@@ -81,7 +105,7 @@ export function RegisterUI() {
                     placeholder="Masukkan password"
                     onChange={(event) => {
                         setAuthData({ ...authData, password: event.target.value })
-                        clearErorr();
+                        clearError();
                     }}
                     value={authData.password}
                 />
@@ -93,7 +117,7 @@ export function RegisterUI() {
                     onChange={(event) => {
                         setAuthData({ ...authData, confirmPass: event.target.value })
                         setValidationErrors({ ...validationErrors, confirmPass: undefined });
-                        clearErorr();
+                        clearError();
                     }}
                     value={authData.confirmPass}
                 />
