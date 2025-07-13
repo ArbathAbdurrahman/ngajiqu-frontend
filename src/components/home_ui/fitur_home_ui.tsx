@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { MyCard } from "../global_ui/my_card";
 import { FilledButton } from "../global_ui/filled_button";
+import Link from "next/link";
 
 interface FeatureItem {
     title: string;
@@ -54,12 +55,15 @@ export function FiturHomeUI() {
 
                 ))}
             </div>
-            <FilledButton
-                // onClick={}
-                paddingy="py-1"
+            <Link
+                href={"/dashboard"}
             >
-                Ayo Buat Kelas
-            </FilledButton>
+                <FilledButton
+                    paddingy="py-1"
+                >
+                    Ayo Buat Kelas
+                </FilledButton>
+            </Link>
         </div>
     );
 }

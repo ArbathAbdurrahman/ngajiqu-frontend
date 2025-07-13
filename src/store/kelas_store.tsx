@@ -1,11 +1,34 @@
 import { create } from "zustand";
 
+// Helper function untuk mendapatkan auth headers
+const getAuthHeaders = async (): Promise<Record<string, string>> => {
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+    };
+
+    try {
+        const { useAuthStore } = await import('./auth_store');
+        const accessToken = useAuthStore.getState().accessToken;
+
+        if (accessToken) {
+            headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+        // Dynamic import untuk menghindari circular dependency
+    } catch (error) {
+        console.warn('Failed to get auth token:', error);
+    }
+
+    return headers;
+};
+
 interface Kelas {
     id: string;
     nama: string;
     alamat: string;
     deskripsi?: string;
     link: string;
+    author?: number;
+    santri_count?: number;
 }
 
 interface KelasState {
@@ -47,11 +70,11 @@ export const useKelasStore = create<KelasStore>((set, get) => ({
         try {
             set({ loading: true, error: null });
 
+            const headers = await getAuthHeaders();
+
             const response = await fetch(`${API_BASE_URL}/kelas`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
                 body: JSON.stringify({
                     nama,
                     alamat,
@@ -94,27 +117,32 @@ export const useKelasStore = create<KelasStore>((set, get) => ({
         try {
             set({ loading: true, error: null });
 
-            const response = await fetch(`${API_BASE_URL}/kelas`, {
+            const headers = await getAuthHeaders();
+
+            const response = await fetch(`${API_BASE_URL}/kelas/kelas`, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Authentication required. Please login again.');
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            // Response berisi array dengan format: [{ id, nama, alamat, deskripsi, link }]
-            const kelasListResponse = await response.json();
+            // Response berisi format paginated: { count, next, previous, results: [...] }
+            const kelasResponse = await response.json();
 
-            // Pastikan response sesuai format yang diharapkan
-            const kelasList: Kelas[] = kelasListResponse.map((kelas: any) => ({
-                id: kelas.id,
+            // Ambil data dari results array dan mapping ke format Kelas
+            const kelasList: Kelas[] = kelasResponse.results.map((kelas: any) => ({
+                id: kelas.id.toString(), // Konversi id ke string
                 nama: kelas.nama,
-                alamat: kelas.alamat,
-                deskripsi: kelas.deskripsi,
-                link: kelas.link,
+                alamat: '', // API tidak mengembalikan alamat, set default kosong
+                deskripsi: kelas.deskripsi || '',
+                link: kelas.slug, // Gunakan slug sebagai link
+                author: kelas.author,
+                santri_count: kelas.santri_count,
             }));
 
             set({
@@ -136,11 +164,11 @@ export const useKelasStore = create<KelasStore>((set, get) => ({
         try {
             set({ loading: true, error: null });
 
+            const headers = await getAuthHeaders();
+
             const response = await fetch(`${API_BASE_URL}/kelas/${id}`, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
             });
 
             if (!response.ok) {
@@ -168,11 +196,11 @@ export const useKelasStore = create<KelasStore>((set, get) => ({
         try {
             set({ loading: true, error: null });
 
+            const headers = await getAuthHeaders();
+
             const response = await fetch(`${API_BASE_URL}/kelas/${id}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
                 body: JSON.stringify(data),
             });
 
@@ -204,11 +232,11 @@ export const useKelasStore = create<KelasStore>((set, get) => ({
         try {
             set({ loading: true, error: null });
 
+            const headers = await getAuthHeaders();
+
             const response = await fetch(`${API_BASE_URL}/kelas/${id}`, {
                 method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
             });
 
             if (!response.ok) {
@@ -229,4 +257,21 @@ export const useKelasStore = create<KelasStore>((set, get) => ({
             throw error;
         }
     },
+}));
+
+// GANTI dengan individual selectors:
+export const useKelasList = () => useKelasStore((state) => state.kelasList);
+export const useKelasLoading = () => useKelasStore((state) => state.loading);
+export const useKelasError = () => useKelasStore((state) => state.error);
+export const useSelectedKelas = () => useKelasStore((state) => state.selectedKelas);
+
+export const useKelasActions = () => useKelasStore((state) => ({
+    addKelas: state.addKelas,
+    getKelas: state.getKelas,
+    getKelasById: state.getKelasById,
+    editKelas: state.editKelas,
+    deleteKelas: state.deleteKelas,
+    setLoading: state.setLoading,
+    setError: state.setError,
+    clearError: state.clearError,
 }));

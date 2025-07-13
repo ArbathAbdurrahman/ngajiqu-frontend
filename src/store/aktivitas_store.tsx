@@ -27,7 +27,7 @@ type AktivitasStore = AktivitasState & AktivitasActions;
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
-export const useAktivitasStore = create<AktivitasStore>((set, get) => ({
+export const useAktivitasStore = create<AktivitasStore>((set) => ({
     // Initial State
     aktivitasList: [],
     selectedAktivitas: null,
