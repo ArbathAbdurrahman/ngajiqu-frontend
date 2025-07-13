@@ -205,8 +205,9 @@ export const useAuthStore = create<AuthStore>()(
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('refreshToken');
 
-                // Clear selected kelas from localStorage
+                // Clear selected kelas and santri from localStorage
                 localStorage.removeItem('selectedKelas');
+                localStorage.removeItem('selectedSantri');
             },
 
             refreshTokens: async () => {

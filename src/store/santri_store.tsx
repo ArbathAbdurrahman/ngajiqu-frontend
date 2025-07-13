@@ -1,9 +1,56 @@
 import { create } from "zustand";
 
+// Helper functions untuk localStorage persistence selectedSantri
+const getSelectedSantriFromStorage = (): Santri | null => {
+    try {
+        if (typeof window !== 'undefined') {
+            const stored = localStorage.getItem('selectedSantri');
+            return stored ? JSON.parse(stored) : null;
+        }
+    } catch (error) {
+        console.warn('Failed to get selectedSantri from localStorage:', error);
+    }
+    return null;
+};
+
+const saveSelectedSantriToStorage = (santri: Santri | null): void => {
+    try {
+        if (typeof window !== 'undefined') {
+            if (santri) {
+                localStorage.setItem('selectedSantri', JSON.stringify(santri));
+            } else {
+                localStorage.removeItem('selectedSantri');
+            }
+        }
+    } catch (error) {
+        console.warn('Failed to save selectedSantri to localStorage:', error);
+    }
+};
+
+// Helper function untuk mendapatkan auth headers (sama seperti kelas_store dan aktivitas_store)
+const getAuthHeaders = async (): Promise<Record<string, string>> => {
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+    };
+
+    try {
+        const accessToken = localStorage.getItem('accessToken');
+
+        if (accessToken) {
+            headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+    } catch (error) {
+        console.warn('Failed to get auth token:', error);
+    }
+
+    return headers;
+};
+
 interface Santri {
     id: string;
-    idKelas: string;
     nama: string;
+    kelas: number;
+    kelas_nama: string;
 }
 
 interface Kartu {
@@ -27,10 +74,14 @@ interface SantriState {
 
 interface SantriActions {
     // Santri CRUD
-    addSantri: (nama: string, kelasId: string) => Promise<void>;
-    getSantri: (kelasId: string) => Promise<void>;
+    addSantri: (nama: string, kelasId: number) => Promise<void>;
+    getSantri: (slug: string) => Promise<void>;
     getSantriById: (id: string) => Promise<void>;
     deleteSantri: (id: string) => Promise<void>;
+
+    // Selected Santri management
+    setSelectedSantri: (santri: Santri | null) => void;
+    clearSelectedSantri: () => void;
 
     // Kartu CRUD
     addKartu: (santriId: string, data: Omit<Kartu, 'id'>) => Promise<void>;
@@ -40,6 +91,10 @@ interface SantriActions {
 
     // Kartu sorting
     sortKartuByDate: (order: 'asc' | 'desc') => void;
+
+    // Get latest kartu
+    getLatestKartu: (santriId: string) => Kartu | null;
+    getLatestKartuForAllSantri: () => Record<string, Kartu | null>;
 
     // State management
     setLoading: (loading: boolean) => void;
@@ -54,11 +109,22 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/a
 export const useSantriStore = create<SantriStore>((set, get) => ({
     // Initial State
     santriList: [],
-    selectedSantri: null,
+    selectedSantri: getSelectedSantriFromStorage(),
     kartuList: [],
     selectedKartu: null,
     loading: false,
     error: null,
+
+    // Selected Santri management
+    setSelectedSantri: (santri: Santri | null) => {
+        set({ selectedSantri: santri });
+        saveSelectedSantriToStorage(santri);
+    },
+
+    clearSelectedSantri: () => {
+        set({ selectedSantri: null });
+        saveSelectedSantriToStorage(null);
+    },
 
     // Actions
     setLoading: (loading: boolean) => set({ loading }),
@@ -68,33 +134,37 @@ export const useSantriStore = create<SantriStore>((set, get) => ({
     // ===== SANTRI CRUD =====
 
     // Add new santri
-    addSantri: async (nama: string, kelasId: string) => {
+    addSantri: async (nama: string, kelasId: number) => {
         try {
             set({ loading: true, error: null });
 
-            const response = await fetch(`${API_BASE_URL}/santri`, {
+            const headers = await getAuthHeaders();
+
+            const response = await fetch(`${API_BASE_URL}/kelas/santri/`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
                 body: JSON.stringify({
                     nama,
-                    kelasId,
+                    kelas: kelasId, // Kirim sebagai number
                 }),
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Authentication required. Please login again.');
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            // Response berisi { id: "generated-id" }
-            const { id } = await response.json();
+            // Response berisi santri object yang baru dibuat
+            const responseData = await response.json();
 
-            // Buat object santri baru dengan data yang dikirim + id dari response
+            // Buat object santri baru dengan data dari response
             const newSantri: Santri = {
-                id,
-                idKelas: kelasId,
-                nama,
+                id: responseData.id.toString(),
+                nama: responseData.nama,
+                kelas: responseData.kelas,
+                kelas_nama: responseData.kelas_nama || '',
             };
 
             set((state) => ({
@@ -112,40 +182,47 @@ export const useSantriStore = create<SantriStore>((set, get) => ({
     },
 
     // Get all santri for a specific kelas
-    getSantri: async (kelasId: string) => {
+    getSantri: async (slug: string) => {
         try {
-            set({ loading: true, error: null });
+            set({ error: null });
 
-            const response = await fetch(`${API_BASE_URL}/santri?kelasId=${kelasId}`, {
+            const headers = await getAuthHeaders();
+
+            const response = await fetch(`${API_BASE_URL}/kelas/kelas/${slug}/santri`, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Authentication required. Please login again.');
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            // Response berisi array dengan format: [{ id, nama, idKelas }]
+            // Response berisi array dengan format: [{ id, nama, kelas, kelas_nama }]
             const santriListResponse = await response.json();
 
-            // Pastikan response sesuai format yang diharapkan
+            // Pastikan response adalah array
+            if (!Array.isArray(santriListResponse)) {
+                throw new Error('Expected array response from API');
+            }
+
+            // Mapping response ke format Santri
             const santriList: Santri[] = santriListResponse.map((santri: any) => ({
-                id: santri.id,
-                idKelas: santri.idKelas,
+                id: santri.id.toString(),
                 nama: santri.nama,
+                kelas: santri.kelas,
+                kelas_nama: santri.kelas_nama,
             }));
 
             set({
                 santriList,
-                loading: false,
             });
 
         } catch (error) {
             set({
                 error: error instanceof Error ? error.message : 'Failed to fetch santri',
-                loading: false,
             });
             throw error;
         }
@@ -156,23 +233,27 @@ export const useSantriStore = create<SantriStore>((set, get) => ({
         try {
             set({ loading: true, error: null });
 
-            const response = await fetch(`${API_BASE_URL}/santri/${id}`, {
+            const headers = await getAuthHeaders();
+
+            const response = await fetch(`${API_BASE_URL}/kelas/santri/${id}`, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Authentication required. Please login again.');
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const santriResponse = await response.json();
 
             const santri: Santri = {
-                id: santriResponse.id,
-                idKelas: santriResponse.idKelas,
+                id: santriResponse.id.toString(),
                 nama: santriResponse.nama,
+                kelas: santriResponse.kelas,
+                kelas_nama: santriResponse.kelas_nama,
             };
 
             set({
@@ -194,14 +275,17 @@ export const useSantriStore = create<SantriStore>((set, get) => ({
         try {
             set({ loading: true, error: null });
 
-            const response = await fetch(`${API_BASE_URL}/santri/${id}`, {
+            const headers = await getAuthHeaders();
+
+            const response = await fetch(`${API_BASE_URL}/kelas/santri/${id}`, {
                 method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Authentication required. Please login again.');
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
@@ -227,37 +311,40 @@ export const useSantriStore = create<SantriStore>((set, get) => ({
         try {
             set({ loading: true, error: null });
 
-            const response = await fetch(`${API_BASE_URL}/kartu`, {
+            const headers = await getAuthHeaders();
+
+            const response = await fetch(`${API_BASE_URL}/kelas/ngaji/`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
                 body: JSON.stringify({
-                    idSantri: santriId,
-                    tanggal: data.tanggal.toISOString(),
-                    bab: data.bab,
-                    halaman: data.halaman,
+                    nama: santriId,
+                    tanggal: data.tanggal.toISOString().split('T')[0], // Format: "YYYY-MM-DD"
+                    surat: data.bab,
+                    ayat: data.halaman,
                     pengampu: data.pengampu,
                     catatan: data.catatan,
                 }),
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Authentication required. Please login again.');
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            // Response berisi { id: "generated-id" }
-            const { id } = await response.json();
+            // Response berisi kartu object yang baru dibuat
+            const responseData = await response.json();
 
-            // Buat object kartu baru dengan data yang dikirim + id dari response
+            // Buat object kartu baru dengan data dari response
             const newKartu: Kartu = {
-                id,
-                idSantri: santriId,
-                tanggal: data.tanggal,
-                bab: data.bab,
-                halaman: data.halaman,
-                pengampu: data.pengampu,
-                catatan: data.catatan,
+                id: responseData.id.toString(),
+                idSantri: responseData.nama.toString(), // nama di response = id santri
+                tanggal: new Date(responseData.tanggal),
+                bab: responseData.surat, // surat di response = bab di kartu
+                halaman: responseData.ayat, // ayat di response = halaman di kartu
+                pengampu: responseData.pengampu,
+                catatan: responseData.catatan,
             };
 
             set((state) => ({
@@ -277,45 +364,68 @@ export const useSantriStore = create<SantriStore>((set, get) => ({
     // Get all kartu for a specific santri
     getKartu: async (santriId: string) => {
         try {
-            set({ loading: true, error: null });
+            set({ error: null });
 
-            const response = await fetch(`${API_BASE_URL}/kartu?santriId=${santriId}`, {
+            const headers = await getAuthHeaders();
+
+            const response = await fetch(`${API_BASE_URL}/kelas/santri/${santriId}/ngaji-records/`, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Authentication required. Please login again.');
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            // Response berisi array dengan format: [{ id, idSantri, tanggal, bab, halaman, pengampu, catatan }]
+            // Response berisi array dengan format yang sama seperti addKartu
             const kartuListResponse = await response.json();
 
-            // Pastikan response sesuai format yang diharapkan
+            // Pastikan response adalah array
+            if (!Array.isArray(kartuListResponse)) {
+                throw new Error('Expected array response from API');
+            }
+
+            // Mapping response ke format Kartu sesuai dengan format API
             const kartuList: Kartu[] = kartuListResponse.map((kartu: any) => ({
-                id: kartu.id,
-                idSantri: kartu.idSantri,
+                id: kartu.id.toString(),
+                idSantri: kartu.nama.toString(), // nama di response = id santri
                 tanggal: new Date(kartu.tanggal),
-                bab: kartu.bab,
-                halaman: Number(kartu.halaman),
+                bab: kartu.surat, // surat di response = bab di kartu
+                halaman: kartu.ayat, // ayat di response = halaman di kartu
                 pengampu: kartu.pengampu,
                 catatan: kartu.catatan,
             }));
 
-            // Sort kartu by date (newest first by default)
-            const sortedKartuList = kartuList.sort((a, b) => b.tanggal.getTime() - a.tanggal.getTime());
+            console.log(`📇 [SantriStore] getKartu for santriId ${santriId}: received ${kartuList.length} kartu records`);
 
-            set({
-                kartuList: sortedKartuList,
-                loading: false,
+            // Merge with existing kartu data instead of replacing
+            set((state) => {
+                // Remove any existing kartu for this santri to avoid duplicates
+                const existingKartuWithoutThisSantri = state.kartuList.filter(
+                    existingKartu => existingKartu.idSantri !== santriId
+                );
+
+                console.log(`📇 [SantriStore] Before merge: ${state.kartuList.length} total kartu, ${state.kartuList.length - existingKartuWithoutThisSantri.length} for this santri`);
+
+                // Add the new kartu data for this santri
+                const mergedKartuList = [...existingKartuWithoutThisSantri, ...kartuList];
+
+                // Sort all kartu by date (newest first)
+                const sortedKartuList = mergedKartuList.sort((a, b) => b.tanggal.getTime() - a.tanggal.getTime());
+
+                console.log(`📇 [SantriStore] After merge: ${sortedKartuList.length} total kartu`);
+
+                return {
+                    kartuList: sortedKartuList,
+                };
             });
 
         } catch (error) {
             set({
                 error: error instanceof Error ? error.message : 'Failed to fetch kartu',
-                loading: false,
             });
             throw error;
         }
@@ -326,25 +436,28 @@ export const useSantriStore = create<SantriStore>((set, get) => ({
         try {
             set({ loading: true, error: null });
 
-            const response = await fetch(`${API_BASE_URL}/kartu/${id}`, {
+            const headers = await getAuthHeaders();
+
+            const response = await fetch(`${API_BASE_URL}/kelas/ngaji/${id}`, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Authentication required. Please login again.');
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const kartuResponse = await response.json();
 
             const kartu: Kartu = {
-                id: kartuResponse.id,
-                idSantri: kartuResponse.idSantri,
+                id: kartuResponse.id.toString(),
+                idSantri: kartuResponse.nama.toString(), // nama di response = id santri
                 tanggal: new Date(kartuResponse.tanggal),
-                bab: kartuResponse.bab,
-                halaman: Number(kartuResponse.halaman),
+                bab: kartuResponse.surat, // surat di response = bab di kartu
+                halaman: kartuResponse.ayat, // ayat di response = halaman di kartu
                 pengampu: kartuResponse.pengampu,
                 catatan: kartuResponse.catatan,
             };
@@ -368,14 +481,17 @@ export const useSantriStore = create<SantriStore>((set, get) => ({
         try {
             set({ loading: true, error: null });
 
-            const response = await fetch(`${API_BASE_URL}/kartu/${id}`, {
+            const headers = await getAuthHeaders();
+
+            const response = await fetch(`${API_BASE_URL}/kelas/ngaji/${id}`, {
                 method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Authentication required. Please login again.');
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
@@ -415,4 +531,78 @@ export const useSantriStore = create<SantriStore>((set, get) => ({
             };
         });
     },
+
+    // Get kartu with the most recent date for a specific santri
+    getLatestKartu: (santriId: string) => {
+        const { kartuList } = get();
+
+        // Filter kartu for the specific santri
+        const santriKartuList = kartuList.filter(kartu => kartu.idSantri === santriId);
+
+        if (santriKartuList.length === 0) {
+            return null;
+        }
+
+        // Find kartu with the most recent date
+        const latestKartu = santriKartuList.reduce((latest, current) => {
+            return current.tanggal.getTime() > latest.tanggal.getTime() ? current : latest;
+        });
+
+        return latestKartu;
+    },
+
+    // Get latest kartu for all santri (returns a record with santriId as key)
+    getLatestKartuForAllSantri: () => {
+        const { kartuList, santriList } = get();
+        const result: Record<string, Kartu | null> = {};
+
+        // Initialize all santri with null
+        santriList.forEach(santri => {
+            result[santri.id] = null;
+        });
+
+        // Find latest kartu for each santri
+        santriList.forEach(santri => {
+            const santriKartuList = kartuList.filter(kartu => kartu.idSantri === santri.id);
+
+            if (santriKartuList.length > 0) {
+                const latestKartu = santriKartuList.reduce((latest, current) => {
+                    return current.tanggal.getTime() > latest.tanggal.getTime() ? current : latest;
+                });
+                result[santri.id] = latestKartu;
+            }
+        });
+
+        return result;
+    },
 }));
+
+// Individual selectors to avoid infinite loop (konsisten dengan store lainnya)
+export const useSantriList = () => useSantriStore((state) => state.santriList);
+export const useSelectedSantri = () => useSantriStore((state) => state.selectedSantri);
+export const useKartuList = () => useSantriStore((state) => state.kartuList);
+export const useSelectedKartu = () => useSantriStore((state) => state.selectedKartu);
+export const useSantriLoading = () => useSantriStore((state) => state.loading);
+export const useSantriError = () => useSantriStore((state) => state.error);
+
+// Individual action selectors
+export const useAddSantri = () => useSantriStore((state) => state.addSantri);
+export const useGetSantri = () => useSantriStore((state) => state.getSantri);
+export const useGetSantriById = () => useSantriStore((state) => state.getSantriById);
+export const useDeleteSantri = () => useSantriStore((state) => state.deleteSantri);
+
+// Selected Santri action selectors
+export const useSetSelectedSantri = () => useSantriStore((state) => state.setSelectedSantri);
+export const useClearSelectedSantri = () => useSantriStore((state) => state.clearSelectedSantri);
+
+export const useAddKartu = () => useSantriStore((state) => state.addKartu);
+export const useGetKartu = () => useSantriStore((state) => state.getKartu);
+export const useGetKartuById = () => useSantriStore((state) => state.getKartuById);
+export const useDeleteKartu = () => useSantriStore((state) => state.deleteKartu);
+export const useSortKartuByDate = () => useSantriStore((state) => state.sortKartuByDate);
+export const useGetLatestKartu = () => useSantriStore((state) => state.getLatestKartu);
+export const useGetLatestKartuForAllSantri = () => useSantriStore((state) => state.getLatestKartuForAllSantri);
+
+export const useSetSantriLoading = () => useSantriStore((state) => state.setLoading);
+export const useSetSantriError = () => useSantriStore((state) => state.setError);
+export const useClearSantriError = () => useSantriStore((state) => state.clearError);
