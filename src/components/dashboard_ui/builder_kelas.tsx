@@ -1,11 +1,10 @@
 'use client'
 
-import { useKelasStore, useKelasList, useKelasLoading, useKelasError } from "@/store/kelas_store";
+import { useKelasStore, useKelasList, useKelasLoading, useKelasError, useSetSelectedKelas } from "@/store/kelas_store";
 import { Edit, Link } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { IconButton } from "rsuite";
 
 export function BuilderKelas() {
     const router = useRouter();
@@ -14,6 +13,7 @@ export function BuilderKelas() {
     const kelasList = useKelasList();
     const loading = useKelasLoading();
     const error = useKelasError();
+    const setSelectedKelas = useSetSelectedKelas();
 
     // ATAU gunakan direct store access untuk getKelas
     const getKelas = useKelasStore((state) => state.getKelas);
@@ -23,8 +23,10 @@ export function BuilderKelas() {
     }, []); // Empty dependency array
 
     const handleCardClick = (kelas: any) => {
+        // Set selected kelas di global state
+        setSelectedKelas(kelas);
         // Navigate ke halaman kelas menggunakan slug sebagai path
-        router.push(`/dashboard/${kelas.link}/${kelas.id}`);
+        router.push(`/dashboard/${kelas.slug}`);
     };
 
     const handleCopyLink = (e: React.MouseEvent, link: string) => {
@@ -84,15 +86,17 @@ export function BuilderKelas() {
                         <p className="text-sm text-gray-600 text-center">{kelas.deskripsi || 'Tidak ada deskripsi'}</p>
                         <p className="text-xs text-gray-500">Santri: {kelas.santri_count || 0}</p>
                     </div>
-                    <div className="flex flex-row justify-between items-center border-[#C8B560] bg-[#C8B560] border-t-2">
-                        <IconButton appearance="subtle" icon={<Edit color="white" />} />
-                        <div className="flex flex-row items-center">
-                            <p className="text-sm text-white truncate max-w-[150px]">{kelas.link}</p>
-                            <IconButton
-                                appearance="subtle"
-                                onClick={(e) => handleCopyLink(e, kelas.link)}
-                                icon={<Link color="white" />}
-                            />
+                    <div className="flex flex-row justify-between items-center border-[#C8B560] bg-[#C8B560] px-3 py-1.5 border-t-2">
+                        <button>
+                            <Edit color="white" />
+                        </button>
+                        <div className="flex flex-row items-center gap-2">
+                            <p className="text-sm text-white truncate max-w-[150px]">{kelas.slug}</p>
+                            <button
+                                onClick={(e) => handleCopyLink(e, kelas.slug)}
+                            >
+                                <Link color="white" />
+                            </button>
                         </div>
                     </div>
                 </div>

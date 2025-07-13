@@ -10,7 +10,7 @@ export function PlusButton({ title, onClick, className = "" }: PlusButtonProps) 
     return (
         <button
             onClick={onClick}
-            className={`bg-[#4CAF50] flex flex-row gap-1 justify-center items-center pl-3 rounded-full hover:bg-[#45a049] transition-colors duration-200 ${className}`}
+            className={`bg-[#4CAF50] flex flex-row gap-1 justify-between items-center pl-3 rounded-full hover:bg-[#45a049] transition-colors duration-200 ${className}`}
         >
             <p className="text-white text-sm font-semibold">
                 {title}

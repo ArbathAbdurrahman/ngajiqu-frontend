@@ -38,36 +38,18 @@ type AuthStore = AuthState & AuthActions;
 
 // const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-const API_BASE_URL = process.env.NODE_ENV === 'development'
-    ? '/api'  // Menggunakan proxy Next.js
-    : process.env.NEXT_PUBLIC_API_URL; // Production URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL; // Production URL
 
 
-// Utility functions to get tokens from cookies
-const getAccessTokenFromCookie = (): string | null => {
-    if (typeof document === 'undefined') return null;
-
-    const cookies = document.cookie.split(';');
-    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('accessToken='));
-
-    if (tokenCookie) {
-        return tokenCookie.split('=')[1];
-    }
-
-    return null;
+// Utility functions to get tokens from localStorage
+const getAccessTokenFromStorage = (): string | null => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('accessToken');
 };
 
-const getRefreshTokenFromCookie = (): string | null => {
-    if (typeof document === 'undefined') return null;
-
-    const cookies = document.cookie.split(';');
-    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('refreshToken='));
-
-    if (tokenCookie) {
-        return tokenCookie.split('=')[1];
-    }
-
-    return null;
+const getRefreshTokenFromStorage = (): string | null => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('refreshToken');
 };
 
 export const useAuthStore = create<AuthStore>()(
@@ -117,12 +99,12 @@ export const useAuthStore = create<AuthStore>()(
                         error: null,
                     });
 
-                    // Set cookies with both tokens
+                    // Store tokens in localStorage
                     if (accessToken) {
-                        document.cookie = `accessToken=${accessToken}; path=/; secure; samesite=strict`;
+                        localStorage.setItem('accessToken', accessToken);
                     }
                     if (refreshToken) {
-                        document.cookie = `refreshToken=${refreshToken}; path=/; secure; samesite=strict`;
+                        localStorage.setItem('refreshToken', refreshToken);
                     }
 
                 } catch (error) {
@@ -170,12 +152,12 @@ export const useAuthStore = create<AuthStore>()(
                         error: null,
                     });
 
-                    // Set cookies with both tokens
+                    // Store tokens in localStorage
                     if (accessToken) {
-                        document.cookie = `accessToken=${accessToken}; path=/; secure; samesite=strict`;
+                        localStorage.setItem('accessToken', accessToken);
                     }
                     if (refreshToken) {
-                        document.cookie = `refreshToken=${refreshToken}; path=/; secure; samesite=strict`;
+                        localStorage.setItem('refreshToken', refreshToken);
                     }
 
                 } catch (error) {
@@ -219,9 +201,12 @@ export const useAuthStore = create<AuthStore>()(
                     error: null,
                 });
 
-                // Clear both cookies
-                document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-                document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                // Clear both tokens from localStorage
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+
+                // Clear selected kelas from localStorage
+                localStorage.removeItem('selectedKelas');
             },
 
             refreshTokens: async () => {
@@ -262,12 +247,12 @@ export const useAuthStore = create<AuthStore>()(
                         error: null,
                     });
 
-                    // Update cookies with new tokens
+                    // Update localStorage with new tokens
                     if (newAccessToken) {
-                        document.cookie = `accessToken=${newAccessToken}; path=/; secure; samesite=strict`;
+                        localStorage.setItem('accessToken', newAccessToken);
                     }
                     if (newRefreshToken) {
-                        document.cookie = `refreshToken=${newRefreshToken}; path=/; secure; samesite=strict`;
+                        localStorage.setItem('refreshToken', newRefreshToken);
                     }
 
                 } catch (error) {
@@ -283,9 +268,9 @@ export const useAuthStore = create<AuthStore>()(
                         error: error instanceof Error ? error.message : 'Token refresh failed',
                     });
 
-                    // Clear cookies
-                    document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-                    document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                    // Clear localStorage
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
                 }
             },
 
@@ -293,18 +278,18 @@ export const useAuthStore = create<AuthStore>()(
                 try {
                     let { accessToken, refreshToken, isAuth } = get();
 
-                    // If no tokens in state, try to get from cookies
+                    // If no tokens in state, try to get from localStorage
                     if (!accessToken || !refreshToken) {
-                        const cookieAccessToken = getAccessTokenFromCookie();
-                        const cookieRefreshToken = getRefreshTokenFromCookie();
+                        const storageAccessToken = getAccessTokenFromStorage();
+                        const storageRefreshToken = getRefreshTokenFromStorage();
 
-                        if (cookieAccessToken && cookieRefreshToken) {
+                        if (storageAccessToken && storageRefreshToken) {
                             set({
-                                accessToken: cookieAccessToken,
-                                refreshToken: cookieRefreshToken
+                                accessToken: storageAccessToken,
+                                refreshToken: storageRefreshToken
                             });
-                            accessToken = cookieAccessToken;
-                            refreshToken = cookieRefreshToken;
+                            accessToken = storageAccessToken;
+                            refreshToken = storageRefreshToken;
                         }
                     }
 
@@ -327,9 +312,9 @@ export const useAuthStore = create<AuthStore>()(
                         error: null,
                     });
 
-                    // Clear cookies
-                    document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-                    document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                    // Clear localStorage
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
                 }
             },
 
