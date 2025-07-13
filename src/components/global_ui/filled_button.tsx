@@ -17,7 +17,7 @@ export function FilledButton({ children, isLoading, bgColor = "bg-[#4CAF50]", co
         <button
             className={clsx(
                 "inline-block h-auto rounded-lg font-medium transition-all duration-200",
-                "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
+                "focus:outline-none focus:ring-2 focus:ring-offset-2 ",
                 isLoading ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:opacity-90",
                 isLoading ? "bg-gray-400" : bgColor,
                 color,

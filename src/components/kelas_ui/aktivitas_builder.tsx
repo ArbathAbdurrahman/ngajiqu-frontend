@@ -53,7 +53,7 @@ export function AktivitasBuilder() {
                         <p className="text-sm">{kelasData?.namaTPQ}</p>
                         <p className="text-sm">{kelasData?.alamat}</p>
                     </div>
-                    <IconButton appearance="subtle" icon={<Trash2 color="red" />} />
+                    <IconButton appearance="subtle" className="z-0" icon={<Trash2 color="red" />} />
                 </div>
                 <div className="flex flex-row bg-[#C8B560] p-3 justify-between">
                     <div className="flex flex-col flex-1">

@@ -1,6 +1,6 @@
 'use client'
 
-import { ClipboardList, Link } from "lucide-react";
+import { ClipboardList, Edit, Link } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { IconButton } from "rsuite";
@@ -72,14 +72,14 @@ export function BuilderKelas() {
                     <p className="text-sm">{kelasData.namaTPQ}</p>
                     <p className="text-sm">{kelasData.alamat}</p>
                 </div>
-                <div className="flex flex-row justify-between items-center border-[#C8B560] border-t-2">
-                    <IconButton appearance="subtle" icon={<ClipboardList />} />
+                <div className="flex flex-row justify-between items-center border-[#C8B560] bg-[#C8B560] border-t-2">
+                    <IconButton appearance="subtle" icon={<Edit color="white" />} />
                     <div className="flex flex-row items-center">
-                        <p className="text-sm text-[#388E3C]">{kelasData.link}</p>
+                        <p className="text-sm text-white">{kelasData.link}</p>
                         <IconButton
                             appearance="subtle"
                             onClick={(e) => handleCopyLink(e, kelasData.link)}
-                            icon={<Link color="#4CAF50" />}
+                            icon={<Link color="white" />}
                         />
                     </div>
                 </div>

@@ -51,18 +51,6 @@ export function TableKartu() {
         // Add sorting logic here
     };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'selesai':
-                return 'bg-green-100 text-green-800';
-            case 'review':
-                return 'bg-orange-100 text-orange-800';
-            case 'progress':
-                return 'bg-blue-100 text-blue-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    };
 
     return (
         <div className="bg-white rounded-lg shadow-sm border border-[#C8B560] overflow-hidden">

@@ -3,13 +3,18 @@
 import { MyTabs } from "@/components/global_ui/my_tabs";
 import { PlusButton } from "@/components/global_ui/plus_button";
 import SearchInput from "@/components/global_ui/search_input";
+import { AddAktivitasOverlay } from "@/components/kelas_ui/add_aktivitas_overlay";
+import { AddSantriOverlay } from "@/components/kelas_ui/add_santri_overlay";
 import { AktivitasBuilder } from "@/components/kelas_ui/aktivitas_builder";
 import { SantriBuilder } from "@/components/kelas_ui/santri_builder";
+import { useOverlayAktivitas, useOverlaySantri } from "@/store/overlay_status";
 import React from "react";
 
 export default function Page() {
-    const [activeTab, setActiveTab] = React.useState("aktivitas");
+    const { open: openAktivitas } = useOverlayAktivitas();
+    const { open: openSantri } = useOverlaySantri()
 
+    const [activeTab, setActiveTab] = React.useState("aktivitas");
     const tabItems = [
         { label: "Aktivitas", value: "aktivitas" },
         { label: "Santri", value: "santri" }
@@ -17,19 +22,25 @@ export default function Page() {
 
     return (
         <div className="bg-[#E8F5E9]">
+
+
+
             <div className="w-full sticky top-[62px] z-30">
                 <MyTabs
                     tabs={tabItems}
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
                     activeColor="#C8B560"
+                    maxWidth="max-w-full"
                 />
 
                 {activeTab === 'aktivitas' ? (
                     <div className="w-full pt-4 pb-2 flex justify-end px-5 bg-[#E8F5E9]">
                         <PlusButton
                             title='Aktivitas Baru'
+                            onClick={openAktivitas}
                         />
+                        <AddAktivitasOverlay />
                     </div>
                 ) : (
 
@@ -38,7 +49,9 @@ export default function Page() {
                         <PlusButton
                             title='Tambah Santri'
                             className="flex flex-1"
+                            onClick={openSantri}
                         />
+                        <AddSantriOverlay />
                     </div>
                 )}
 
