@@ -24,6 +24,8 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="manifest" href="/manifest.json"></link>
+        <link rel="icon" type="image/png" sizes="32x32" href="/Logo2.png" />
+        <meta name="theme-color" content="#4CAF50" />
       </head>
       <body
         className={`${montserrat.variable} antialiased`}

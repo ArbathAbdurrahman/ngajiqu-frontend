@@ -97,9 +97,9 @@ export function AktivitasPublic() {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col sm:grid sm:grid-cols-2 overflow-y-scroll gap-4">
             {aktivitasList.map((aktivitas) => (
-                <div key={aktivitas.id} className="flex flex-col w-full bg-white border-2 border-[#C8B560] rounded-xl overflow-clip">
+                <div key={aktivitas.id} className="flex flex-col w-full h-fit bg-white border-2 border-[#C8B560] rounded-xl overflow-clip">
                     <div className="flex flex-row justify-between items-start">
                         <div className="flex flex-col p-3">
                             <h1 className="text-xl font-semibold">{aktivitas.kelas_nama}</h1>

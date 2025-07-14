@@ -31,10 +31,10 @@ const featureContent: FeatureItem[] = [
 export function FiturHomeUI() {
     return (
         <div className="flex flex-col justify-center items-center gap-6 sm:gap-8 px-4 py-12 sm:py-16 bg-white">
-            <h2 className="text-[#1F2937] text-center sm:text-5xl/tight text-base/tight font-semibold">
+            <h2 className="text-[#1F2937] text-center sm:text-3xl/tight text-base/tight font-semibold">
                 Fitur Utama
             </h2>
-            
+
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 w-full max-w-6xl mx-auto">
                 {featureContent.map(({ title, icon }, index) => (
                     <MyCard
@@ -44,7 +44,7 @@ export function FiturHomeUI() {
                         className="flex flex-col justify-center items-center gap-2 sm:gap-3 lg:gap-4 h-[120px] sm:h-[140px] lg:h-[160px] w-full"
                         padding="p-3 sm:p-4 lg:p-4"
                     >
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-14 lg:h-14 relative flex-shrink-0">
+                        <div className="w-8 h-8 sm:w-16 sm:h-16 lg:w-14 lg:h-14 relative flex-shrink-0">
                             <Image
                                 src={icon}
                                 alt={title}
@@ -58,7 +58,7 @@ export function FiturHomeUI() {
                     </MyCard>
                 ))}
             </div>
-            
+
             <div className="mt-4 sm:mt-6">
                 <Link href={"/dashboard"}>
                     <FilledButton

@@ -10,11 +10,9 @@ import { MyCard } from "@/components/global_ui/my_card";
 export default function Dashboard() {
     const { open } = useOverlayKelas()
     return (
-        <div className=" bg-[#E8F5E9]">
-
+        <div className="bg-[#E8F5E9] h-[91vh]">
             <AddKelasOverlay />
             <EditKelasOverlay />
-
             <div className="w-full pt-4 gap-5 pb-2 flex justify-between items-center px-5 bg-[#E8F5E9] sticky top-[62px] z-30 ">
                 <MyCard padding="p-3" bgColor="bg-blue-50">
                     <p className="text-xs ">*Tekan tahan kelas untuk menghapus kelas</p>
@@ -24,7 +22,7 @@ export default function Dashboard() {
                     onClick={open}
                 />
             </div>
-            <div className="flex flex-col h-screen overflow-y-scroll gap-4 px-5 py-2">
+            <div className="flex flex-col sm:grid sm:grid-cols-2 overflow-y-scroll h-[80vh] gap-4 px-5 py-2">
                 <BuilderKelas />
             </div>
         </div>

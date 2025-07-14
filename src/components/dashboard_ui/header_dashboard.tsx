@@ -11,7 +11,7 @@ export function HeaderDashboard() {
     );
 
     return (
-        <div className="flex flex-row justify-between items-center px-3 py-2 bg-white ">
+        <div className="flex flex-row justify-between items-center px-3 sm:px-5 py-2 sm:py-0 bg-white ">
             <Link
                 href="/"
             >
@@ -20,7 +20,7 @@ export function HeaderDashboard() {
                     alt="logo"
                     width={575}
                     height={300}
-                    className=" w-[110px] "
+                    className=" w-[110px] sm:w-[150px] "
                 />
             </Link>
 

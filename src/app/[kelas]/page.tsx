@@ -24,7 +24,7 @@ export default function Page() {
     };
 
     return (
-        <div className="bg-[#E8F5E9]">
+        <div className="bg-[#E8F5E9] h-[91vh]">
             <div className="w-full sticky top-[62px] z-30">
                 <MyTabs
                     tabs={tabItems}
@@ -53,7 +53,7 @@ export default function Page() {
             </div>
 
             {/* Tab Content */}
-            <div className="flex flex-col min-h-screen gap-4 px-5 py-2">
+            <div className="flex flex-col gap-4 h-[75vh] px-5 py-2">
                 {activeTab === 'aktivitas' ? (
                     <AktivitasPublic />
                 ) : (

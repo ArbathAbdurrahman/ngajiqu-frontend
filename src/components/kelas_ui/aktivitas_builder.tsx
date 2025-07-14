@@ -148,41 +148,39 @@ export function AktivitasBuilder() {
     }
 
     return (
-        <>
-            <div className="space-y-4">
-                {aktivitasList.map((aktivitas) => (
-                    <div key={aktivitas.id} className="flex flex-col w-full bg-white border-2 border-[#C8B560] rounded-xl overflow-clip">
-                        <div className="flex flex-row justify-between items-start">
-                            <div className="flex flex-col p-3">
-                                <h1 className="text-xl font-semibold">{aktivitas.kelas_nama}</h1>
-                                {/* Prevent hydration mismatch */}
-                                {isClient && selectedKelas?.deskripsi && (
-                                    <p className="text-sm text-gray-600">{selectedKelas.deskripsi}</p>
-                                )}
-                            </div>
-                            <IconButton
-                                appearance="subtle"
-                                className="z-0 m-2"
-                                icon={<Trash2 color="red" />}
-                                onClick={() => handleDeleteClick(aktivitas.id, aktivitas.nama)}
-                                loading={loading}
-                            />
+        <div className="flex flex-col sm:grid sm:grid-cols-2 overflow-y-scroll gap-4">
+            {aktivitasList.map((aktivitas) => (
+                <div key={aktivitas.id} className="flex flex-col w-full h-fit bg-white border-2 border-[#C8B560] rounded-xl overflow-clip">
+                    <div className="flex flex-row justify-between items-start">
+                        <div className="flex flex-col p-3">
+                            <h1 className="text-xl font-semibold">{aktivitas.kelas_nama}</h1>
+                            {/* Prevent hydration mismatch */}
+                            {isClient && selectedKelas?.deskripsi && (
+                                <p className="text-sm text-gray-600">{selectedKelas.deskripsi}</p>
+                            )}
                         </div>
-                        <div className="flex flex-row bg-[#C8B560] p-3 justify-between">
-                            <div className="flex flex-col flex-1">
-                                <h3 className="font-semibold text-white">Kegiatan</h3>
-                                <p className="text-white">{aktivitas.tanggal}</p>
-                            </div>
-                            <div className="flex flex-col flex-1">
-                                <p className="text-xs font-semibold text-white">{aktivitas.nama}</p>
-                                {aktivitas.deskripsi && (
-                                    <p className="text-xs text-white/80 mt-1">{aktivitas.deskripsi}</p>
-                                )}
-                            </div>
+                        <IconButton
+                            appearance="subtle"
+                            className="z-0 m-2"
+                            icon={<Trash2 color="red" />}
+                            onClick={() => handleDeleteClick(aktivitas.id, aktivitas.nama)}
+                            loading={loading}
+                        />
+                    </div>
+                    <div className="flex flex-row bg-[#C8B560] p-3 justify-between">
+                        <div className="flex flex-col flex-1">
+                            <h3 className="font-semibold text-white">Kegiatan</h3>
+                            <p className="text-white">{aktivitas.tanggal}</p>
+                        </div>
+                        <div className="flex flex-col flex-1">
+                            <p className="text-xs font-semibold text-white">{aktivitas.nama}</p>
+                            {aktivitas.deskripsi && (
+                                <p className="text-xs text-white/80 mt-1">{aktivitas.deskripsi}</p>
+                            )}
                         </div>
                     </div>
-                ))}
-            </div>
+                </div>
+            ))}
 
             {/* Delete Confirmation Modal */}
             <MyModal
@@ -203,6 +201,6 @@ export function AktivitasBuilder() {
                     </p>
                 )}
             </MyModal>
-        </>
+        </div>
     );
 }
