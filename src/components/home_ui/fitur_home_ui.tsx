@@ -16,7 +16,7 @@ const featureContent: FeatureItem[] = [
     },
     {
         title: "Kustom Kelas",
-        icon: "/feature/Intwhiteboard.png",
+        icon: "/feature/intwhiteboard.png",
     },
     {
         title: "Grafik Progres",
