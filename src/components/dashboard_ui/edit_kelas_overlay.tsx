@@ -6,7 +6,7 @@ import { MyTextField } from "../global_ui/my_text_field";
 import { useState } from "react";
 import { useOverlayEditKelas } from "@/store/overlay_status";
 import { MyTextArea } from "../global_ui/my_text_area";
-import { useAddKelas, useEditKelas, useGenerateSlug, useValidateSlugInput, useKelasLoading, useKelasError, useSelectedKelas } from "@/store/kelas_store";
+import { useEditKelas, useGenerateSlug, useValidateSlugInput, useKelasLoading, useSelectedKelas } from "@/store/kelas_store";
 import { Message, useToaster } from "rsuite";
 import { useEffect } from "react";
 
@@ -16,13 +16,11 @@ export function EditKelasOverlay() {
     const { isOpen, close } = useOverlayEditKelas();
 
     // Get actions and state from kelas store using individual selectors
-    const addKelas = useAddKelas();
     const editKelas = useEditKelas();
     const selectedKelas = useSelectedKelas();
     const generateSlug = useGenerateSlug();
     const validateSlugInput = useValidateSlugInput();
     const loading = useKelasLoading();
-    const error = useKelasError();
 
     const [formData, setFormData] = useState<{ nama: string, deskripsi: string, slug: string }>({
         nama: "",
@@ -31,19 +29,17 @@ export function EditKelasOverlay() {
     });
 
     const [slugError, setSlugError] = useState<string | null>(null);
-    const [isEditMode, setIsEditMode] = useState(false);
 
     // Load data when modal opens and selectedKelas exists
     useEffect(() => {
         if (isOpen && selectedKelas) {
-            setIsEditMode(true);
             setFormData({
                 nama: selectedKelas.nama || "",
                 deskripsi: selectedKelas.deskripsi || "",
                 slug: selectedKelas.slug || "",
             });
         } else if (isOpen) {
-            setIsEditMode(false);
+            // If no selected kelas, reset form
             setFormData({ nama: "", deskripsi: "", slug: "" });
         }
         setSlugError(null);
@@ -68,9 +64,9 @@ export function EditKelasOverlay() {
         }
 
         try {
-            if (isEditMode && selectedKelas) {
-                // Edit existing kelas
-                await editKelas(selectedKelas.id, {
+            if (selectedKelas) {
+                // Edit existing kelas using slug
+                await editKelas(selectedKelas.slug, {
                     nama: formData.nama,
                     deskripsi: formData.deskripsi,
                     slug: formData.slug,
@@ -84,20 +80,7 @@ export function EditKelasOverlay() {
                     { placement: 'topEnd' }
                 );
             } else {
-                // Add new kelas
-                await addKelas({
-                    nama: formData.nama,
-                    deskripsi: formData.deskripsi,
-                    slug: formData.slug,
-                });
-
-                // Show success toast
-                toaster.push(
-                    <Message showIcon type="success" closable>
-                        <strong>Berhasil!</strong> Kelas berhasil ditambahkan.
-                    </Message>,
-                    { placement: 'topEnd' }
-                );
+                throw new Error('Tidak ada kelas yang dipilih untuk diedit');
             }
 
             // Reset form dan close overlay jika berhasil
@@ -106,12 +89,12 @@ export function EditKelasOverlay() {
             close();
 
         } catch (error) {
-            console.error('Failed to add kelas:', error);
+            console.error('Failed to edit kelas:', error);
 
             // Show error toast
             toaster.push(
                 <Message showIcon type="error" closable>
-                    <strong>Error!</strong> {error instanceof Error ? error.message : `Gagal ${isEditMode ? 'memperbarui' : 'menambahkan'} kelas.`}
+                    <strong>Error!</strong> {error instanceof Error ? error.message : 'Gagal memperbarui kelas.'}
                 </Message>,
                 { placement: 'topEnd' }
             );
@@ -127,9 +110,9 @@ export function EditKelasOverlay() {
             <MyCard width="w-auto" height="h-auto" bgColor="bg-[#F5F5F5]" className="flex flex-col overflow-visible gap-2 sm:px-10 px-5 py-5 justify-center items-center max-w-md w-full border-2 border-[#C8B560]">
                 <div className="flex flex-col gap-3 items-center">
                     <h1 className="text-xl font-semibold">
-                        {isEditMode ? 'Edit Kelas' : 'Tambah Kelas Baru'}
+                        Edit Kelas
                     </h1>
-                    {isEditMode && selectedKelas && (
+                    {selectedKelas && (
                         <p className="text-sm text-gray-600 text-center">
                             Mengedit kelas: <span className="font-medium text-[#C8B560]">{selectedKelas.nama}</span>
                         </p>
@@ -139,13 +122,6 @@ export function EditKelasOverlay() {
                     onSubmit={handleSubmit}
                     className="flex flex-col gap-3 w-full"
                 >
-                    {/* Show error message if any */}
-                    {error && (
-                        <div className="text-red-500 text-sm text-center p-2 bg-red-50 border border-red-200 rounded">
-                            <strong>Error:</strong> {error}
-                        </div>
-                    )}
-
                     <MyTextField
                         title="Nama Kelas"
                         type="text"
@@ -201,7 +177,7 @@ export function EditKelasOverlay() {
                     {/* Show slug preview */}
                     {formData.slug && !slugError && (
                         <div className="text-green-600 text-sm p-2 bg-green-50 border border-green-200 rounded">
-                            <strong>Preview URL:</strong> /dashboard/{formData.slug}
+                            <strong>Preview URL:</strong> {typeof window !== 'undefined' ? window.location.origin : ''}/{formData.slug}
                         </div>
                     )}
 
@@ -211,10 +187,7 @@ export function EditKelasOverlay() {
                         width="w-full"
                         disabled={loading || !!slugError || !formData.nama || !formData.slug || !formData.deskripsi}
                     >
-                        {loading
-                            ? (isEditMode ? 'Memperbarui...' : 'Menambahkan...')
-                            : (isEditMode ? 'Perbarui' : 'Tambah')
-                        }
+                        {loading ? 'Memperbarui...' : 'Perbarui'}
                     </FilledButton>
                     <FilledButton
                         type="button"

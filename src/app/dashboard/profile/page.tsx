@@ -1,19 +1,16 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Edit, Mail, X, Save } from 'lucide-react';
-import { Avatar } from 'rsuite';
-import Link from 'next/link';
+import { Avatar, Message, useToaster } from 'rsuite';
+import { useAuthActions, useUserProfile, useAuthLoading } from '@/store/auth_store';
+import { useKelasStore, useGetKelas } from '@/store/kelas_store';
+import { useAktivitasStore, useGetAktivitas } from '@/store/aktivitas_store';
+import { MyTextArea } from '@/components/global_ui/my_text_area';
 
-interface FormData {
-  name: string;
-  description: string;
-  email: string;
-}
-
-interface TempData {
-  name: string;
-  description: string;
-  email: string;
+interface StatsData {
+  totalKelas: number;
+  totalSantri: number;
+  totalAktivitas: number;
 }
 
 interface ModalProps {
@@ -23,92 +20,300 @@ interface ModalProps {
   children: React.ReactNode;
 }
 
+// Modal Component - moved outside to prevent re-creation on re-renders
+const Modal: React.FC<ModalProps> = React.memo(({ isOpen, onClose, title, children }) => {
+  console.log('Modal render:', { isOpen, title });
+
+  if (!isOpen) {
+    console.log('Modal not open, returning null');
+    return null;
+  }
+
+  console.log('Modal is open, rendering:', title);
+
+  return (
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-md">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h3 className="text-lg font-semibold">{title}</h3>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="p-4">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+});
+Modal.displayName = 'Modal';
+
 export default function AlHudaProfile(): React.JSX.Element {
+  const toaster = useToaster();
+
+  // Auth store hooks
+  const { getUser, patchUsername, patchDescription, patchEmail, logout } = useAuthActions();
+  const userProfile = useUserProfile();
+  const isLoading = useAuthLoading();
+
+  // Data stores for stats
+  const getKelas = useGetKelas();
+  const getAktivitas = useGetAktivitas();
+
+  // Modal states
   const [showEditName, setShowEditName] = useState<boolean>(false);
   const [showEditDesc, setShowEditDesc] = useState<boolean>(false);
   const [showEditEmail, setShowEditEmail] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
 
-  // State untuk form data
-  const [formData, setFormData] = useState<FormData>({
-    name: 'Al-Huda',
-    description: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit. Amet expedita unde consequuntur, placeat nisi a, obcaecati exercitationem veniam itaque quos numquam, perferendis illo quaerat alias eum suscipit delectus earum debitis.',
-    email: 'halo@gmail.com'
+  // Debug modal state changes
+  useEffect(() => {
+    console.log('Modal states changed:', { showEditName, showEditDesc, showEditEmail });
+  }, [showEditName, showEditDesc, showEditEmail]);
+
+  // Focus management for modals
+  useEffect(() => {
+    if (showEditName && nameInputRef.current) {
+      console.log('Focusing name input via useEffect');
+      const timeoutId = setTimeout(() => {
+        nameInputRef.current?.focus();
+        console.log('Name input focused via timeout');
+      }, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [showEditName]);
+
+  useEffect(() => {
+    if (showEditEmail && emailInputRef.current) {
+      console.log('Focusing email input via useEffect');
+      const timeoutId = setTimeout(() => {
+        emailInputRef.current?.focus();
+        console.log('Email input focused via timeout');
+      }, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [showEditEmail]);
+
+  // Loading states
+  const [localLoading, setLocalLoading] = useState<boolean>(false);
+  const [statsLoading, setStatsLoading] = useState<boolean>(false);
+
+  // Stats state
+  const [stats, setStats] = useState<StatsData>({
+    totalKelas: 0,
+    totalSantri: 0,
+    totalAktivitas: 0
   });
 
-  const [tempData, setTempData] = useState<TempData>({
-    name: '',
-    description: '',
-    email: ''
-  });
+  // Simple input states
+  const [nameInput, setNameInput] = useState<string>('');
+  const [descriptionInput, setDescriptionInput] = useState<string>('');
+  const [emailInput, setEmailInput] = useState<string>('');
 
-  // Function untuk handle PATCH request
-  const handleUpdate = async (field: keyof FormData, value: string): Promise<void> => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ [field]: value })
-      });
+  // Refs for focus management
+  const nameInputRef = React.useRef<HTMLInputElement>(null);
+  const emailInputRef = React.useRef<HTMLInputElement>(null);
 
-      if (response.ok) {
-        const updatedData = await response.json();
-        setFormData(prev => ({ ...prev, [field]: value }));
-        // Close modal
-        setShowEditName(false);
-        setShowEditDesc(false);
-        setShowEditEmail(false);
-        console.log('Update successful:', updatedData);
-      } else {
-        console.error('Update failed');
+  // Load user data and all stats on component mount
+  useEffect(() => {
+    const loadAllData = async () => {
+      setStatsLoading(true);
+      try {
+        // Load user profile
+        await getUser();
+
+        // Load kelas data
+        await getKelas();
+
+        // Wait for stores to update
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Get fresh data from stores
+        const freshKelasList = useKelasStore.getState().kelasList;
+
+        // Calculate stats
+        let totalSantri = 0;
+        let totalAktivitas = 0;
+
+        // Sum up santri from each kelas
+        freshKelasList.forEach(kelas => {
+          if (kelas.santri_count) {
+            totalSantri += kelas.santri_count;
+          }
+        });
+
+        // Get aktivitas count for each kelas
+        for (const kelas of freshKelasList) {
+          try {
+            await getAktivitas(kelas.slug);
+            const aktivitasList = useAktivitasStore.getState().aktivitasList;
+            totalAktivitas += aktivitasList.length;
+          } catch (error) {
+            console.warn(`Failed to get aktivitas for kelas ${kelas.slug}:`, error);
+          }
+        }
+
+        // Update stats
+        setStats({
+          totalKelas: freshKelasList.length,
+          totalSantri,
+          totalAktivitas
+        });
+
+      } catch (error) {
+        console.error('Failed to load data:', error);
+        toaster.push(
+          <Message type="error" showIcon closable>
+            Gagal memuat data
+          </Message>,
+          { placement: 'topCenter' }
+        );
+      } finally {
+        setStatsLoading(false);
       }
+    };
+
+    loadAllData();
+  }, [getAktivitas, getKelas, getUser, toaster]); // Only run once on mount
+
+  // Simple update functions for each field
+  const handleUpdateName = async () => {
+    if (!nameInput.trim()) return;
+
+    setLocalLoading(true);
+    try {
+      await patchUsername(nameInput);
+      setShowEditName(false);
+      setNameInput('');
+
+      toaster.push(
+        <Message type="success" showIcon closable>
+          Username berhasil diperbarui
+        </Message>,
+        { placement: 'topCenter' }
+      );
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Error updating name:', error);
+      toaster.push(
+        <Message type="error" showIcon closable>
+          Gagal memperbarui username
+        </Message>,
+        { placement: 'topCenter' }
+      );
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   };
 
-  // Modal Component
-  const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
-    if (!isOpen) return null;
+  const handleUpdateDescription = async () => {
+    setLocalLoading(true);
+    try {
+      await patchDescription(descriptionInput);
+      setShowEditDesc(false);
+      setDescriptionInput('');
 
-    return (
-      <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg w-full max-w-md">
-          <div className="flex items-center justify-between p-4 border-b">
-            <h3 className="text-lg font-semibold">{title}</h3>
-            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="p-4">
-            {children}
-          </div>
-        </div>
-      </div>
-    );
+      toaster.push(
+        <Message type="success" showIcon closable>
+          Deskripsi berhasil diperbarui
+        </Message>,
+        { placement: 'topCenter' }
+      );
+    } catch (error) {
+      console.error('Error updating description:', error);
+      toaster.push(
+        <Message type="error" showIcon closable>
+          Gagal memperbarui deskripsi
+        </Message>,
+        { placement: 'topCenter' }
+      );
+    } finally {
+      setLocalLoading(false);
+    }
   };
 
-  const handleInputChange = (field: keyof TempData, value: string): void => {
-    setTempData(prev => ({ ...prev, [field]: value }));
+  const handleUpdateEmail = async () => {
+    if (!emailInput.trim()) return;
+
+    setLocalLoading(true);
+    try {
+      await patchEmail(emailInput);
+      setShowEditEmail(false);
+      setEmailInput('');
+
+      toaster.push(
+        <Message type="success" showIcon closable>
+          Email berhasil diperbarui
+        </Message>,
+        { placement: 'topCenter' }
+      );
+    } catch (error) {
+      console.error('Error updating email:', error);
+      toaster.push(
+        <Message type="error" showIcon closable>
+          Gagal memperbarui email
+        </Message>,
+        { placement: 'topCenter' }
+      );
+    } finally {
+      setLocalLoading(false);
+    }
   };
 
-  const openEditModal = (field: keyof FormData): void => {
-    setTempData(prev => ({ ...prev, [field]: formData[field] }));
-    switch (field) {
-      case 'name':
-        setShowEditName(true);
-        break;
-      case 'description':
-        setShowEditDesc(true);
-        break;
-      case 'email':
-        setShowEditEmail(true);
-        break;
+  // Simple modal open/close functions
+  const openNameModal = useCallback(() => {
+    console.log('Opening name modal');
+    console.log('Current username:', userProfile?.user.username);
+    setNameInput(userProfile?.user.username || '');
+    setShowEditName(true);
+    console.log('Name modal state set to true');
+  }, [userProfile?.user.username]);
+
+  const openDescModal = useCallback(() => {
+    console.log('Opening desc modal');
+    console.log('Current description:', userProfile?.description);
+    setDescriptionInput(userProfile?.description || '');
+    setShowEditDesc(true);
+    console.log('Desc modal state set to true');
+  }, [userProfile?.description]);
+
+  const openEmailModal = useCallback(() => {
+    console.log('Opening email modal');
+    console.log('Current email:', userProfile?.user.email);
+    setEmailInput(userProfile?.user.email || '');
+    setShowEditEmail(true);
+    console.log('Email modal state set to true');
+  }, [userProfile?.user.email]);
+
+  const closeNameModal = useCallback(() => {
+    console.log('Closing name modal');
+    setShowEditName(false);
+    setNameInput('');
+  }, []);
+
+  const closeDescModal = useCallback(() => {
+    console.log('Closing desc modal');
+    setShowEditDesc(false);
+    setDescriptionInput('');
+  }, []);
+
+  const closeEmailModal = useCallback(() => {
+    console.log('Closing email modal');
+    setShowEditEmail(false);
+    setEmailInput('');
+  }, []);
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toaster.push(
+        <Message type="success" showIcon closable>
+          Berhasil logout
+        </Message>,
+        { placement: 'topCenter' }
+      );
+    } catch (error) {
+      console.error('Logout error:', error);
     }
   };
 
@@ -116,14 +321,14 @@ export default function AlHudaProfile(): React.JSX.Element {
     <div className="min-h-screen bg-green-100 flex items-center justify-center p-4">
       <div className="w-full max-w-sm bg-white rounded-lg shadow-lg overflow-hidden">
         {/* Header Section */}
-        <div className="bg-yellow-600 text-white p-6 text-center relative">
+        <div className="bg-[#C8B560] text-white p-6 text-center relative">
           {/* Profile Picture */}
-          <Avatar circle size='lg'/>
-          
+          <Avatar circle size='lg' />
+
           {/* Name and Edit Icon */}
           <div className="flex items-center justify-center gap-2">
-            <h1 className="text-xl font-semibold">{formData.name}</h1>
-            <button onClick={() => openEditModal('name')}>
+            <h1 className="text-xl font-semibold">{userProfile?.user.username || ''}</h1>
+            <button onClick={openNameModal}>
               <Edit className="w-4 h-4" />
             </button>
           </div>
@@ -134,15 +339,33 @@ export default function AlHudaProfile(): React.JSX.Element {
           <div className="flex justify-between text-center">
             <div>
               <p className="text-sm text-gray-600 font-medium">Jumlah Kelas</p>
-              <p className="text-2xl font-bold text-gray-800">2</p>
+              <div className="text-2xl font-bold text-gray-800">
+                {statsLoading ? (
+                  <div className="w-6 h-6 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                ) : (
+                  stats.totalKelas
+                )}
+              </div>
             </div>
             <div>
               <p className="text-sm text-gray-600 font-medium">Jumlah Santri</p>
-              <p className="text-2xl font-bold text-gray-800">12</p>
+              <div className="text-2xl font-bold text-gray-800">
+                {statsLoading ? (
+                  <div className="w-6 h-6 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                ) : (
+                  stats.totalSantri
+                )}
+              </div>
             </div>
             <div>
-              <p className="text-sm text-gray-600 font-medium">Akun Dibuat</p>
-              <p className="text-2xl font-bold text-gray-800">07/25</p>
+              <p className="text-sm text-gray-600 font-medium">Jumlah Aktivitas</p>
+              <div className="text-2xl font-bold text-gray-800">
+                {statsLoading ? (
+                  <div className="w-6 h-6 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                ) : (
+                  stats.totalAktivitas
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -151,13 +374,13 @@ export default function AlHudaProfile(): React.JSX.Element {
         <div className="p-6">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold text-gray-800">Deskripsi Bio</h2>
-            <button onClick={() => openEditModal('description')}>
+            <button onClick={openDescModal}>
               <Edit className="w-4 h-4 text-gray-500" />
             </button>
           </div>
-          
+
           <p className="text-gray-700 text-sm">
-            {formData.description}
+            {userProfile?.description || ''}
           </p>
         </div>
 
@@ -166,9 +389,9 @@ export default function AlHudaProfile(): React.JSX.Element {
           <div className="flex items-center justify-between text-gray-700">
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4" />
-              <span className="text-sm">Email: {formData.email}</span>
+              <span className="text-sm">Email: {userProfile?.user.email || ''}</span>
             </div>
-            <button onClick={() => openEditModal('email')}>
+            <button onClick={openEmailModal}>
               <Edit className="w-4 h-4 text-gray-500" />
             </button>
           </div>
@@ -176,16 +399,19 @@ export default function AlHudaProfile(): React.JSX.Element {
 
         {/* Logout Button */}
         <div className="px-6 pb-6">
-          <button className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+          <button
+            onClick={handleLogout}
+            className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+          >
             Logout
           </button>
         </div>
       </div>
 
       {/* Edit Name Modal */}
-      <Modal 
-        isOpen={showEditName} 
-        onClose={() => setShowEditName(false)}
+      <Modal
+        isOpen={showEditName}
+        onClose={closeNameModal}
         title="Edit Nama"
       >
         <div className="space-y-4">
@@ -194,26 +420,32 @@ export default function AlHudaProfile(): React.JSX.Element {
               Nama
             </label>
             <input
+              ref={nameInputRef}
               type="text"
-              value={tempData.name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('name', e.target.value)}
+              value={nameInput}
+              onChange={(e) => {
+                console.log('Name input changed:', e.target.value);
+                setNameInput(e.target.value);
+              }}
+              onFocus={() => console.log('Name input focused')}
+              onBlur={() => console.log('Name input blurred')}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
               placeholder="Masukkan nama"
             />
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => setShowEditName(false)}
+              onClick={closeNameModal}
               className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Batal
             </button>
             <button
-              onClick={() => handleUpdate('name', tempData.name)}
-              disabled={loading}
+              onClick={handleUpdateName}
+              disabled={localLoading || isLoading}
               className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? (
+              {localLoading || isLoading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <Save className="w-4 h-4" />
@@ -225,37 +457,35 @@ export default function AlHudaProfile(): React.JSX.Element {
       </Modal>
 
       {/* Edit Description Modal */}
-      <Modal 
-        isOpen={showEditDesc} 
-        onClose={() => setShowEditDesc(false)}
+      <Modal
+        isOpen={showEditDesc}
+        onClose={closeDescModal}
         title="Edit Deskripsi Bio"
       >
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Deskripsi
-            </label>
-            <textarea
-              value={tempData.description}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('description', e.target.value)}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-              placeholder="Masukkan deskripsi"
-            />
-          </div>
+          <MyTextArea
+            title="Deskripsi"
+            placeholder="Masukkan deskripsi"
+            value={descriptionInput}
+            onChange={(event) => {
+              console.log('Description changed:', event.target.value);
+              setDescriptionInput(event.target.value);
+            }}
+            rows={4}
+          />
           <div className="flex gap-2">
             <button
-              onClick={() => setShowEditDesc(false)}
+              onClick={closeDescModal}
               className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Batal
             </button>
             <button
-              onClick={() => handleUpdate('description', tempData.description)}
-              disabled={loading}
+              onClick={handleUpdateDescription}
+              disabled={localLoading || isLoading}
               className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? (
+              {localLoading || isLoading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <Save className="w-4 h-4" />
@@ -267,9 +497,9 @@ export default function AlHudaProfile(): React.JSX.Element {
       </Modal>
 
       {/* Edit Email Modal */}
-      <Modal 
-        isOpen={showEditEmail} 
-        onClose={() => setShowEditEmail(false)}
+      <Modal
+        isOpen={showEditEmail}
+        onClose={closeEmailModal}
         title="Edit Email"
       >
         <div className="space-y-4">
@@ -278,26 +508,32 @@ export default function AlHudaProfile(): React.JSX.Element {
               Email
             </label>
             <input
+              ref={emailInputRef}
               type="email"
-              value={tempData.email}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('email', e.target.value)}
+              value={emailInput}
+              onChange={(e) => {
+                console.log('Email input changed:', e.target.value);
+                setEmailInput(e.target.value);
+              }}
+              onFocus={() => console.log('Email input focused')}
+              onBlur={() => console.log('Email input blurred')}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
               placeholder="Masukkan email"
             />
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => setShowEditEmail(false)}
+              onClick={closeEmailModal}
               className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Batal
             </button>
             <button
-              onClick={() => handleUpdate('email', tempData.email)}
-              disabled={loading}
+              onClick={handleUpdateEmail}
+              disabled={localLoading || isLoading}
               className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? (
+              {localLoading || isLoading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <Save className="w-4 h-4" />

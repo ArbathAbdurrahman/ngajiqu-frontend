@@ -6,13 +6,16 @@ import { MyTextField } from "../global_ui/my_text_field";
 import { MyCard } from "../global_ui/my_card";
 import { useAuthActions, useAuthError, useAuthLoading } from "@/store/auth_store";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
-import React, { useState, useEffect } from "react";
-import { Message } from "rsuite";
+import React, { useState, useEffect, useRef } from "react";
+import { Message, useToaster } from "rsuite";
+import Image from "next/image";
 
 export function LoginUI() {
     const { login, clearError } = useAuthActions();
     const isLoading = useAuthLoading();
     const error = useAuthError();
+    const toaster = useToaster();
+    const errorShownRef = useRef<string | null>(null);
 
     // Handle redirects after successful login
     useAuthRedirect();
@@ -22,41 +25,55 @@ export function LoginUI() {
         password: "",
     });
 
-    // Clear error when component mounts or when user starts typing
+    // Show error toaster when error occurs - with duplicate prevention
     useEffect(() => {
-        if (error) {
-            clearError();
+        if (error && error !== errorShownRef.current) {
+            errorShownRef.current = error;
+
+            toaster.push(
+                <Message type="error" showIcon closable>
+                    <strong>Login Gagal!</strong> {error}
+                </Message>,
+                { placement: 'topCenter' }
+            );
+
+            // Clear error setelah delay singkat
+            const timeoutId = setTimeout(() => {
+                clearError();
+                errorShownRef.current = null;
+            }, 100);
+
+            return () => clearTimeout(timeoutId);
         }
-    }, [authData.email, authData.password]);
+    }, [error, clearError, toaster]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Clear any previous errors
-        clearError();
-
-        // Perform login
+        // Perform login (auth store sudah clear error otomatis)
         await login(authData.email, authData.password);
+
+        // Success message akan ditampilkan di dashboard setelah redirect berhasil
     }
 
 
     return (
 
         <MyCard width="w-auto" height="h-auto" bgColor="bg-[#F5F5F5]" className="flex flex-col gap-4 sm:px-10 px-5 py-5 justify-center items-center">
-            <div className="flex flex-col gap-3 items-center">
-                {/* <Link href={"/"}>
-                        <Image src={"/logo.svg"} alt="logo" width={33} height={33} className="w-[33px] h-[33px]" />
-                    </Link> */}
+            <div className="flex flex-col items-center">
+                <Link
+                    href="/"
+                >
+                    <Image
+                        src={"/Logo2.png"}
+                        alt="logo"
+                        width={500}
+                        height={500}
+                        className=" w-[70px] "
+                    />
+                </Link>
                 <h1 className="text-xl font-semibold">Login ke NgajiQu</h1>
             </div>
-
-            {error && (
-                <div className="w-full sm:w-[400px]">
-                    <Message type="error" showIcon>
-                        <strong>Error!</strong> {error}
-                    </Message>
-                </div>
-            )}
 
             <form
                 onSubmit={handleLogin}

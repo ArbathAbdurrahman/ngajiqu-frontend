@@ -12,7 +12,7 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   title: "NgajiQu",
-  description: "Platform pembelajaran Al-Quran",
+  description: "Progres Ngaji di Ujung Jari, Terpantau Sepenuh Hati",
 };
 
 export default function RootLayout({

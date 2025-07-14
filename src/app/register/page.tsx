@@ -2,8 +2,9 @@
 
 import { RegisterUI } from "@/components/auth_ui/register_ui"
 import { useGuestRoute } from "@/hooks/useAuthRedirect";
+import { Suspense } from "react";
 
-export default function RegisterPage() {
+function RegisterContent() {
     // Redirect to dashboard if already authenticated
     const { isLoading } = useGuestRoute();
 
@@ -20,5 +21,17 @@ export default function RegisterPage() {
         <main className="min-h-screen flex items-center justify-center bg-[#4CAF50]">
             <RegisterUI />
         </main>
-    )
+    );
+}
+
+export default function RegisterPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex justify-center items-center bg-[#4CAF50]">
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
+            </div>
+        }>
+            <RegisterContent />
+        </Suspense>
+    );
 }

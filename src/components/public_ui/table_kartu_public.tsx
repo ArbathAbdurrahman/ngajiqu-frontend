@@ -8,40 +8,14 @@ import {
     useGetKartu,
     useSortKartuByDate,
     useSantriLoading,
-    useSantriError,
-    useDeleteKartu
+    useSantriError
 } from "@/store/santri_store";
-import { MyModal } from "@/components/global_ui/my_modal";
-import { Message, useToaster } from "rsuite";
-
-// Define local Kartu interface
-interface Kartu {
-    id: string;
-    idSantri: string;
-    tanggal: Date;
-    bab: string;
-    halaman: number;
-    pengampu: string;
-    catatan: string;
-}
 
 const TABLE_HEAD = ["Tanggal", "Jilid/Surat", "Hal/Ayat", "Pengampu", "Catatan"];
 
-export function TableKartu() {
-    const toaster = useToaster();
-
+export function TableKartuPublic() {
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [isClient, setIsClient] = useState(false);
-
-    // Long press state
-    const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
-    const [isLongPressing, setIsLongPressing] = useState(false);
-    const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
-
-    // Delete modal state
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [kartuToDelete, setKartuToDelete] = useState<{ id: string, tanggal: string, bab: string } | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
 
     // Global state selectors
     const allKartuList = useKartuList();
@@ -57,7 +31,6 @@ export function TableKartu() {
     // Actions
     const getKartu = useGetKartu();
     const sortKartuByDate = useSortKartuByDate();
-    const deleteKartu = useDeleteKartu();
 
     // SSR safety
     useEffect(() => {
@@ -77,124 +50,9 @@ export function TableKartu() {
         sortKartuByDate(newSortOrder);
     };
 
-    // Long press handlers
-    const handleMouseDown = (kartu: Kartu) => {
-        setIsLongPressing(false);
-        const timer = setTimeout(() => {
-            setIsLongPressing(true);
-            handleDeleteClick(kartu.id, kartu.tanggal.toLocaleDateString('id-ID'), kartu.bab);
-        }, 800); // 800ms long press
-        setLongPressTimer(timer);
-    };
-
-    const handleMouseUp = () => {
-        if (longPressTimer) {
-            clearTimeout(longPressTimer);
-            setLongPressTimer(null);
-        }
-        setIsLongPressing(false);
-    };
-
-    const handleMouseLeave = () => {
-        if (longPressTimer) {
-            clearTimeout(longPressTimer);
-            setLongPressTimer(null);
-        }
-        setIsLongPressing(false);
-    };
-
-    // Touch handlers for mobile
-    const handleTouchStart = (kartu: Kartu, e: React.TouchEvent) => {
-        const touch = e.touches[0];
-        setTouchStart({ x: touch.clientX, y: touch.clientY });
-        setIsLongPressing(false);
-
-        const timer = setTimeout(() => {
-            setIsLongPressing(true);
-            handleDeleteClick(kartu.id, kartu.tanggal.toLocaleDateString('id-ID'), kartu.bab);
-        }, 800); // 800ms long press
-        setLongPressTimer(timer);
-    };
-
-    const handleTouchMove = (e: React.TouchEvent) => {
-        if (!touchStart || !longPressTimer) return;
-
-        const touch = e.touches[0];
-        const deltaX = Math.abs(touch.clientX - touchStart.x);
-        const deltaY = Math.abs(touch.clientY - touchStart.y);
-
-        // Cancel long press if user moves finger too much (scrolling)
-        if (deltaX > 10 || deltaY > 10) {
-            clearTimeout(longPressTimer);
-            setLongPressTimer(null);
-            setIsLongPressing(false);
-        }
-    };
-
-    const handleTouchEnd = () => {
-        if (longPressTimer) {
-            clearTimeout(longPressTimer);
-            setLongPressTimer(null);
-        }
-        setIsLongPressing(false);
-        setTouchStart(null);
-    };
-
-    // Delete handlers
-    const handleDeleteClick = (kartuId: string, tanggal: string, bab: string) => {
-        setKartuToDelete({ id: kartuId, tanggal, bab });
-        setIsDeleteModalOpen(true);
-    };
-
-    const handleConfirmDelete = async () => {
-        if (!kartuToDelete) return;
-
-        setIsDeleting(true);
-        try {
-            await deleteKartu(kartuToDelete.id);
-            console.log('Kartu deleted successfully:', kartuToDelete);
-
-            // Refresh kartu data for current santri
-            if (selectedSantri?.id) {
-                await getKartu(selectedSantri.id);
-            }
-
-            setIsDeleteModalOpen(false);
-            setKartuToDelete(null);
-        } catch (error) {
-            console.error('Failed to delete kartu:', error);
-            toaster.push(
-                <Message type="error" showIcon closable>
-                    Gagal menghapus kartu. Silakan coba lagi.
-                </Message>,
-                { placement: 'topCenter' }
-            );
-        } finally {
-            setIsDeleting(false);
-        }
-    };
-
-    const handleCancelDelete = () => {
-        setIsDeleteModalOpen(false);
-        setKartuToDelete(null);
-    };
-
-    // Clean up timer on unmount
-    useEffect(() => {
-        return () => {
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-            }
-        };
-    }, [longPressTimer]);
-
     // Don't render until client-side for SSR safety
     if (!isClient) {
-        return <div className="h-full w-full flex justify-center items-center">
-            <p>
-                Loading...
-            </p>
-        </div>;
+        return <div>Loading...</div>;
     }
 
     if (!selectedSantri) {
@@ -285,15 +143,7 @@ export function TableKartu() {
                             kartuList.map((kartu, index) => (
                                 <tr
                                     key={index}
-                                    className={`hover:bg-gray-50 select-none transition-colors duration-200 cursor-pointer ${isLongPressing ? 'bg-red-100 border-red-200' : ''}`}
-                                    onMouseDown={() => handleMouseDown(kartu)}
-                                    onMouseUp={handleMouseUp}
-                                    onMouseLeave={handleMouseLeave}
-                                    onTouchStart={(e) => handleTouchStart(kartu, e)}
-                                    onTouchMove={handleTouchMove}
-                                    onTouchEnd={handleTouchEnd}
-                                    onContextMenu={(e) => e.preventDefault()} // Prevent right-click context menu
-                                    style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+                                    className="hover:bg-gray-50 transition-colors duration-200"
                                 >
                                     <td className="px-2 py-1.5 text-[10px] text-gray-900 w-[18%] align-top text-center">
                                         <div className="break-words">{kartu.tanggal.toLocaleDateString('id-ID')}</div>
@@ -317,28 +167,7 @@ export function TableKartu() {
                 </table>
             </div>
 
-            {/* Footer */}
-
-            {/* Delete Confirmation Modal */}
-            <MyModal
-                isOpen={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
-                title="APAKAH ANDA YAKIN INGIN MENGHAPUS KARTU INI?"
-                onConfirm={handleConfirmDelete}
-                onCancel={handleCancelDelete}
-                isLoading={isDeleting}
-                size="sm"
-                confirmText="IYA"
-                cancelText="TIDAK"
-                noteText="Note: Data kartu yang dihapus tidak bisa dikembalikan*"
-            >
-                {kartuToDelete && (
-                    <div className="text-center text-gray-700">
-                        <p><strong>Tanggal:</strong> {kartuToDelete.tanggal}</p>
-                        <p><strong>Bab:</strong> {kartuToDelete.bab}</p>
-                    </div>
-                )}
-            </MyModal>
+            {/* Footer - Public version has no footer actions */}
 
         </div>
     );

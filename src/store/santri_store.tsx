@@ -211,7 +211,7 @@ export const useSantriStore = create<SantriStore>((set, get) => ({
             }
 
             // Mapping response ke format Santri
-            const santriList: Santri[] = santriListResponse.map((santri: any) => ({
+            const santriList: Santri[] = santriListResponse.map((santri: { id: string; nama: string; kelas: number; kelas_nama: string }) => ({
                 id: santri.id.toString(),
                 nama: santri.nama,
                 kelas: santri.kelas,
@@ -395,7 +395,7 @@ export const useSantriStore = create<SantriStore>((set, get) => ({
             }
 
             // Mapping response ke format Kartu sesuai dengan format API
-            const kartuList: Kartu[] = kartuListResponse.map((kartu: any) => ({
+            const kartuList: Kartu[] = kartuListResponse.map((kartu: { id: string; nama: string; tanggal: string; surat: string; ayat: number; pengampu: string; catatan: string }) => ({
                 id: kartu.id.toString(),
                 idSantri: kartu.nama.toString(), // nama di response = id santri
                 tanggal: new Date(kartu.tanggal),
