@@ -145,7 +145,7 @@ export function AddKelasOverlay() {
                     />
 
                     <MyTextField
-                        title="Link Kelas (Slug)"
+                        title="Kode Kelas"
                         type="text"
                         required={true}
                         placeholder="otomatis-dibuat-dari-nama-kelas"
@@ -168,7 +168,7 @@ export function AddKelasOverlay() {
                     {/* Show slug preview */}
                     {formData.slug && !slugError && (
                         <div className="text-green-600 text-sm p-2 bg-green-50 border border-green-200 rounded">
-                            <strong>Preview URL:</strong> /dashboard/kelas/{formData.slug}
+                            <strong>Preview URL:</strong> {typeof window !== 'undefined' ? window.location.origin : ''}/{formData.slug}
                         </div>
                     )}
 

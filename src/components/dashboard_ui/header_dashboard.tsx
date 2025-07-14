@@ -1,12 +1,19 @@
+'use client'
+
 import Image from "next/image";
 import Link from "next/link";
-import { Avatar } from "rsuite";
+import { Avatar, AvatarProps, Dropdown } from "rsuite";
 
 export function HeaderDashboard() {
+
+    const renderToggle = (props: AvatarProps) => (
+        <Avatar circle {...props} />
+    );
+
     return (
         <div className="flex flex-row justify-between items-center px-3 py-2 bg-white ">
             <Link
-                href="/dashboard"
+                href="/"
             >
                 <Image
                     src={"/logo.png"}
@@ -16,11 +23,18 @@ export function HeaderDashboard() {
                     className=" w-[110px] "
                 />
             </Link>
-            <div>
-                <Link href={"/dashboard/profile"}>
-                    <Avatar circle />
-                </Link>
-            </div>
+
+            <Dropdown
+                renderToggle={renderToggle}
+                placement="leftStart"
+            >
+                <Dropdown.Item as={Link} href={"/dashboard"}>
+                    Dashboard
+                </Dropdown.Item>
+                <Dropdown.Item as={Link} href={"/dashboard/profile"}>
+                    Profile
+                </Dropdown.Item>
+            </Dropdown>
         </div>
     )
 }

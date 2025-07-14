@@ -175,6 +175,10 @@ export const useAuthStore = create<AuthStore>()(
                         isLoading: true, error: null
                     });
 
+                    // Debug: Log data yang akan dikirim
+                    console.log('🚀 Registration data being sent:', userData);
+                    console.log('🌐 API URL:', `${API_BASE_URL}/akun/register`);
+
                     //fetch api
                     const response = await fetch(`${API_BASE_URL}/akun/register`, {
                         method: 'POST',
@@ -184,11 +188,18 @@ export const useAuthStore = create<AuthStore>()(
                         body: JSON.stringify(userData),
                     });
 
+                    console.log('📡 Response status:', response.status);
+                    console.log('📡 Response headers:', response.headers);
+                    console.log('📡 Response ok:', response.ok);
+
+
                     if (!response.ok) {
                         // Parse error message from API response
                         let errorMessage = "Registration failed";
                         try {
                             const errorData = await response.json();
+                            console.log('❌ Full error response:', errorData); // Debug log
+
                             // Check common API error message fields
                             if (errorData.detail) {
                                 errorMessage = errorData.detail;
@@ -198,39 +209,39 @@ export const useAuthStore = create<AuthStore>()(
                                 errorMessage = errorData.error;
                             } else if (typeof errorData === 'string') {
                                 errorMessage = errorData;
+                            } else if (typeof errorData === 'object') {
+                                // Handle field-specific errors like { "username": ["A user with that username already exists."] }
+                                const fieldErrors = [];
+                                for (const [field, errors] of Object.entries(errorData)) {
+                                    if (Array.isArray(errors)) {
+                                        fieldErrors.push(`${field}: ${errors.join(', ')}`);
+                                    } else if (typeof errors === 'string') {
+                                        fieldErrors.push(`${field}: ${errors}`);
+                                    }
+                                }
+                                if (fieldErrors.length > 0) {
+                                    errorMessage = fieldErrors.join('; ');
+                                }
                             }
                         } catch (parseError) {
                             console.log('Could not parse error response:', parseError);
+                            console.log(parseError);
+                            errorMessage = `Registration failed (Status: ${response.status})`;
                         }
+                        console.log('❌ Final error message:', errorMessage);
                         throw new Error(errorMessage);
                     }
 
-                    //response data
+                    //response data - only contains success message
                     const data = await response.json();
+                    console.log('Registration response:', data); // Debug log
 
-                    // Handle API response format (API returns 'access' and 'refresh' keys)
-                    const accessToken = data.access;
-                    const refreshToken = data.refresh;
-
-                    //set response data
+                    // Registration successful - just clear loading state
+                    // User needs to login separately after registration
                     set({
-                        user: data.user,
-                        accessToken: accessToken,
-                        refreshToken: refreshToken,
-                        isAuth: true,
                         isLoading: false,
                         error: null,
                     });
-
-                    // Store tokens in localStorage and cookies
-                    if (accessToken) {
-                        localStorage.setItem('accessToken', accessToken);
-                        setCookie('accessToken', accessToken);
-                    }
-                    if (refreshToken) {
-                        localStorage.setItem('refreshToken', refreshToken);
-                        setCookie('refreshToken', refreshToken);
-                    }
 
                 } catch (error) {
                     set({

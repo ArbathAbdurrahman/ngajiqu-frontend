@@ -28,9 +28,11 @@ export function HeaderPublic() {
                 />
             </Link>
             {isClient && selectedKelas && (
-                <h1 className="font-semibold sm:text-2xl text-lg text-[#4CAF50] ml-4">
-                    {selectedKelas.nama}
-                </h1>
+                <Link href={`/${selectedKelas.slug}`}>
+                    <h1 className="font-semibold sm:text-2xl text-lg text-[#4CAF50] ml-4">
+                        {selectedKelas.nama}
+                    </h1>
+                </Link>
             )}
         </div>
     )

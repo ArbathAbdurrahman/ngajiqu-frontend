@@ -154,7 +154,7 @@ export function EditKelasOverlay() {
                     />
 
                     <MyTextField
-                        title="Link Kelas (Slug)"
+                        title="Kode Kelas"
                         type="text"
                         required={true}
                         placeholder="otomatis-dibuat-dari-nama-kelas"
