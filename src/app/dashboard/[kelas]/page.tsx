@@ -26,6 +26,10 @@ export default function Page() {
         setSearchQuery(query);
     };
 
+    const handleClearSearch = () => {
+        setSearchQuery("");
+    };
+
     return (
         <div className="bg-[#E8F5E9]">
 
@@ -75,6 +79,8 @@ export default function Page() {
                     <AktivitasBuilder />
                 ) : (
                     <SantriBuilder
+                        searchQuery={searchQuery}
+                        onClearSearch={handleClearSearch}
                     />
                 )}
             </div>

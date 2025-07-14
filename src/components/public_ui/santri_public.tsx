@@ -143,7 +143,18 @@ export function SantriPublic({ searchQuery = '', onClearSearch }: SantriPublicPr
     }
 
     if (!santriList || santriList.length === 0) {
-        return <div>Tidak ada santri ditemukan.</div>;
+        return (
+            <div className="flex flex-col items-center justify-center p-8 text-gray-500">
+                <p className="text-center">Belum ada santri</p>
+                <p className="text-sm text-center mt-1">
+                    {/* Prevent hydration mismatch dengan conditional rendering */}
+                    {isClient && selectedKelas
+                        ? `Tambahkan santri pertama untuk kelas ${selectedKelas.nama}`
+                        : 'Tambahkan santri pertama'
+                    }
+                </p>
+            </div>
+        )
     }
 
     // Filter santri berdasarkan search query
