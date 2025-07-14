@@ -4,6 +4,7 @@ import { TableKartu } from "@/components/kartu_santri/table_kartu";
 import { useSelectedSantri } from "@/store/santri_store";
 import { useEffect, useState } from "react";
 import { MyCard } from "@/components/global_ui/my_card";
+import { TableKartuPublic } from "@/components/public_ui/table_kartu_public";
 
 export default function Santri() {
     const [isClient, setIsClient] = useState(false);
@@ -36,7 +37,7 @@ export default function Santri() {
                 <MyCard padding="p-3" bgColor="bg-blue-50" >
                     <p className="text-xs text-gray-600">*Tahan (long press) pada baris kartu selama 1 detik untuk menghapus</p>
                 </MyCard>
-                <TableKartu />
+                <TableKartuPublic />
             </div>
         </div>
     )

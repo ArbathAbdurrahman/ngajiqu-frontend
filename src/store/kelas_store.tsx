@@ -203,9 +203,7 @@ export const useKelasStore = create<KelasStore>((set) => ({
         try {
             set({ loading: true, error: null });
 
-            const headers = {
-                'Content-Type': 'application/json',
-            };
+            const headers = await getAuthHeaders();
 
             const response = await fetch(`${API_BASE_URL}/kelas/kelas`, {
                 method: 'GET',
