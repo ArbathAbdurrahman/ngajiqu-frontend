@@ -297,7 +297,7 @@ export const useKelasStore = create<KelasStore>((set) => ({
 
             if (!response.ok) {
                 if (response.status === 404) {
-                    throw new Error(`Kelas dengan slug '${slug}' tidak ditemukan.`);
+                    throw new Error(`Kelas dengan kode '${slug}' tidak ditemukan.`);
                 }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -324,7 +324,7 @@ export const useKelasStore = create<KelasStore>((set) => ({
 
         } catch (error) {
             set({
-                error: error instanceof Error ? error.message : 'Failed to fetch kelas by slug',
+                error: error instanceof Error ? error.message : 'Failed to fetch kelas by code',
                 loading: false,
             });
             throw error;

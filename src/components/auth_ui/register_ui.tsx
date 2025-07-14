@@ -10,6 +10,7 @@ import { Message, useToaster } from "rsuite";
 import { useGuestRoute } from "@/hooks/useAuthRedirect";
 import { X } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 interface TermsModalProps {
     isOpen: boolean;
@@ -104,6 +105,7 @@ export function RegisterUI(): React.JSX.Element {
     const isLoading = useAuthLoading();
     const error = useAuthError();
     const toaster = useToaster();
+    const router = useRouter();
     const errorShownRef = useRef<string | null>(null);
 
     // Redirect authenticated users to dashboard
@@ -193,13 +195,10 @@ export function RegisterUI(): React.JSX.Element {
                 password2: authData.confirmPass,
             });
 
-            // Show success message
-            toaster.push(
-                <Message type="success" showIcon closable>
-                    <strong>Registrasi Berhasil!</strong> Selamat datang di NgajiQu.
-                </Message>,
-                { placement: 'topCenter' }
-            );
+
+            // Redirect to login page after successful registration
+            router.push('/login');
+
         } catch (error) {
             // Error akan ditangani oleh useEffect di atas
             console.error('Register error:', error);
