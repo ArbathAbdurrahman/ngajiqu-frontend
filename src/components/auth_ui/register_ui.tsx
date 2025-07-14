@@ -9,6 +9,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Message, useToaster } from "rsuite";
 import { useGuestRoute } from "@/hooks/useAuthRedirect";
 import { X } from "lucide-react";
+import Image from "next/image";
 
 interface TermsModalProps {
     isOpen: boolean;
@@ -208,7 +209,18 @@ export function RegisterUI(): React.JSX.Element {
     return (
         <>
             <MyCard width="w-auto" height="h-auto" className="flex flex-col gap-4 sm:px-10 px-5 py-5 justify-center items-center">
-                <div className="flex flex-col gap-3 items-center">
+                <div className="flex flex-col items-center">
+                    <Link
+                        href="/"
+                    >
+                        <Image
+                            src={"/Logo2.png"}
+                            alt="logo"
+                            width={500}
+                            height={500}
+                            className=" w-[70px] "
+                        />
+                    </Link>
                     <h1 className="text-xl font-semibold">Daftar ke NgajiQu</h1>
                 </div>
 

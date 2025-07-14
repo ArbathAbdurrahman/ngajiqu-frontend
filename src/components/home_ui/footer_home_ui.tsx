@@ -5,19 +5,22 @@ import Link from "next/link";
 export function FooterUI() {
     return (
         <footer
-            className="flex flex-col w-full py-12 gap-8 sm:px-20 px-10 bg-white"
+            className="flex flex-col w-full py-8 gap-8 sm:px-20 px-6 bg-white"
         >
             <div className="flex sm:flex-row flex-col gap-8">
                 <div className="flex flex-col gap-6 flex-1">
                     <div className="flex items-center gap-2">
-                        {/* <Image
-                            src={"/logo.svg"}
-                            alt="logo"
-                            width={24}
-                            height={24}
-                            className="w-[24px] h-[24px]"
-                        /> */}
-                        <h4 className="font-bold text-lg text-[#4CAF50]">NgajiQu</h4>
+                        <Link
+                            href="/"
+                        >
+                            <Image
+                                src={"/logo.png"}
+                                alt="logo"
+                                width={575}
+                                height={300}
+                                className=" w-[110px] "
+                            />
+                        </Link>
                     </div>
                     <p className="text-[#4B5563] text-sm">Progres Ngaji di Ujung Jari, Terpantau Sepenuh Hati.</p>
                 </div>
@@ -30,7 +33,7 @@ export function FooterUI() {
                         </div>
                         <div className="flex flex-row gap-2">
                             <Mail color="#388E3C" />
-                            <p className="text-[#4B5563] text-sm">help@kopkas.org</p>
+                            <p className="text-[#4B5563] text-sm">help@ngajiqu.org</p>
                         </div>
                     </div>
                 </div>

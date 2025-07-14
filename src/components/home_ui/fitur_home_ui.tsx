@@ -64,6 +64,7 @@ export function FiturHomeUI() {
                     Ayo Buat Kelas
                 </FilledButton>
             </Link>
+
         </div>
     );
 }

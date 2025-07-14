@@ -8,6 +8,7 @@ import { useAuthActions, useAuthError, useAuthLoading } from "@/store/auth_store
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import React, { useState, useEffect, useRef } from "react";
 import { Message, useToaster } from "rsuite";
+import Image from "next/image";
 
 export function LoginUI() {
     const { login, clearError } = useAuthActions();
@@ -59,10 +60,18 @@ export function LoginUI() {
     return (
 
         <MyCard width="w-auto" height="h-auto" bgColor="bg-[#F5F5F5]" className="flex flex-col gap-4 sm:px-10 px-5 py-5 justify-center items-center">
-            <div className="flex flex-col gap-3 items-center">
-                {/* <Link href={"/"}>
-                        <Image src={"/logo.svg"} alt="logo" width={33} height={33} className="w-[33px] h-[33px]" />
-                    </Link> */}
+            <div className="flex flex-col items-center">
+                <Link
+                    href="/"
+                >
+                    <Image
+                        src={"/Logo2.png"}
+                        alt="logo"
+                        width={500}
+                        height={500}
+                        className=" w-[70px] "
+                    />
+                </Link>
                 <h1 className="text-xl font-semibold">Login ke NgajiQu</h1>
             </div>
 

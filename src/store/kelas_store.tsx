@@ -101,7 +101,7 @@ interface KelasAction {
     getKelas: () => Promise<void>;
     getKelasById: (id: string) => Promise<void>;
     getKelasBySlug: (slug: string) => Promise<void>;
-    editKelas: (id: string, data: Partial<Kelas>) => Promise<void>;
+    editKelas: (slug: string, data: Partial<Kelas>) => Promise<void>;
     deleteKelas: (slug: string) => Promise<void>;
     setSelectedKelas: (kelas: Kelas | null) => void;
     clearSelectedKelas: () => void;
@@ -332,13 +332,13 @@ export const useKelasStore = create<KelasStore>((set) => ({
     },
 
     // Edit kelas
-    editKelas: async (id: string, data: Partial<Kelas>) => {
+    editKelas: async (slug: string, data: Partial<Kelas>) => {
         try {
             set({ loading: true, error: null });
 
             const headers = await getAuthHeaders();
 
-            const response = await fetch(`${API_BASE_URL}/kelas/${id}`, {
+            const response = await fetch(`${API_BASE_URL}/kelas/kelas/${slug}`, {
                 method: 'PUT',
                 headers,
                 body: JSON.stringify(data),
@@ -350,13 +350,32 @@ export const useKelasStore = create<KelasStore>((set) => ({
 
             const updatedKelas = await response.json();
 
-            set((state) => ({
-                kelasList: state.kelasList.map((kelas) =>
-                    kelas.id === id ? updatedKelas : kelas
-                ),
-                selectedKelas: state.selectedKelas?.id === id ? updatedKelas : state.selectedKelas,
-                loading: false,
-            }));
+            // Mapping response ke format Kelas yang konsisten
+            const kelasData: Kelas = {
+                id: updatedKelas.id.toString(),
+                nama: updatedKelas.nama,
+                deskripsi: updatedKelas.deskripsi || '',
+                slug: updatedKelas.slug,
+                author: updatedKelas.author,
+                santri_count: updatedKelas.santri_count || 0,
+            };
+
+            set((state) => {
+                const updatedState = {
+                    kelasList: state.kelasList.map((kelas) =>
+                        kelas.slug === slug ? kelasData : kelas
+                    ),
+                    selectedKelas: state.selectedKelas?.slug === slug ? kelasData : state.selectedKelas,
+                    loading: false,
+                };
+
+                // Also save to localStorage if this is the selected kelas
+                if (state.selectedKelas?.slug === slug) {
+                    saveSelectedKelasToStorage(kelasData);
+                }
+
+                return updatedState;
+            });
 
         } catch (error) {
             set({
