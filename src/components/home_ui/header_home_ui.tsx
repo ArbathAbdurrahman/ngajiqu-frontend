@@ -15,7 +15,7 @@ export function HeaderHomeUI() {
     );
 
     return (
-        <div className="flex items-center flex-row px-3 py-2 justify-between w-full h-fit z-50 top-0 bg-white">
+        <div className="flex items-center flex-row px-3 sm:px-5 py-2 sm:py-0 justify-between w-full h-fit z-50 top-0 bg-white">
             <div className="flex items-center gap-2">
                 <Link
                     href="/"
@@ -25,7 +25,7 @@ export function HeaderHomeUI() {
                         alt="logo"
                         width={575}
                         height={300}
-                        className=" w-[110px] "
+                        className=" w-[110px] sm:w-[150px]"
                     />
                 </Link>
 

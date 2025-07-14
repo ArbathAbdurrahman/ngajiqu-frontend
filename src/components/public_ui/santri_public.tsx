@@ -171,7 +171,7 @@ export function SantriPublic({ searchQuery = '', onClearSearch }: SantriPublicPr
         <>
             {/* Search results info */}
             {searchQuery.trim() && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="mb-4 p-3 sm:w-fit place-self-end bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex justify-between items-center">
                         <p className="text-sm text-blue-700">
                             Menampilkan {filteredSantriList.length} dari {santriList.length} santri
@@ -206,7 +206,7 @@ export function SantriPublic({ searchQuery = '', onClearSearch }: SantriPublicPr
                     </p>
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="flex flex-col sm:grid sm:grid-cols-2 overflow-y-scroll gap-4">
                     {filteredSantriList.map((santri, index) => {
                         // Get latest kartu for this santri - only called when kartu data is ready
                         console.log(`🔍 [SantriBuilder] Getting latest kartu for santri ${index + 1}/${santriList.length}: ${santri.nama} (ID: ${santri.id})`);

@@ -318,7 +318,7 @@ export default function AlHudaProfile(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen bg-green-100 flex items-center justify-center p-4">
+    <div className="h-[90vh] bg-green-100 flex items-center justify-center p-4">
       <div className="w-full max-w-sm bg-white rounded-lg shadow-lg overflow-hidden">
         {/* Header Section */}
         <div className="bg-[#C8B560] text-white p-6 text-center relative">

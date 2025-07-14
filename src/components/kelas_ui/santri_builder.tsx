@@ -184,7 +184,7 @@ export function SantriBuilder({ searchQuery = '', onClearSearch }: SantriBuilder
     // Show loading state until all data is loaded
     if (isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center p-8">
+            <div className="flex flex-col items-center w-full justify-center p-8">
                 <div className="text-center">
                     <p className="text-lg font-medium">Loading data...</p>
                     <p className="text-sm text-gray-500 mt-1">
@@ -224,7 +224,7 @@ export function SantriBuilder({ searchQuery = '', onClearSearch }: SantriBuilder
         <>
             {/* Search results info */}
             {searchQuery.trim() && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="mb-4 p-3 w-full sm:w-fit place-self-end bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex justify-between items-center">
                         <p className="text-sm text-blue-700">
                             Menampilkan {filteredSantriList.length} dari {santriList.length} santri
@@ -259,7 +259,7 @@ export function SantriBuilder({ searchQuery = '', onClearSearch }: SantriBuilder
                     </p>
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="flex flex-col sm:grid sm:grid-cols-2 overflow-y-scroll gap-4">
                     {filteredSantriList.map((santri, index) => {
                         // Get latest kartu for this santri - only called when kartu data is ready
                         console.log(`🔍 [SantriBuilder] Getting latest kartu for santri ${index + 1}/${santriList.length}: ${santri.nama} (ID: ${santri.id})`);
@@ -270,7 +270,7 @@ export function SantriBuilder({ searchQuery = '', onClearSearch }: SantriBuilder
                             <div
                                 key={santri.id}
                                 onClick={() => handleCardClick(santri)}
-                                className="flex flex-col w-full bg-white border-2 border-[#C8B560] rounded-xl overflow-clip cursor-pointer hover:shadow-lg transition-shadow"
+                                className="flex flex-col w-full h-fit bg-white border-2 border-[#C8B560] rounded-xl overflow-clip cursor-pointer hover:shadow-lg transition-shadow"
                             >
                                 <div className="flex flex-row justify-between items-start">
                                     <div className="flex flex-col p-3">

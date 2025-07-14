@@ -49,7 +49,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     // Show loading state while fetching kelas data
     if (!isClient || (loading && !selectedKelas)) {
         return (
-            <div className="bg-[#E8F5E9] min-h-screen">
+            <div className="bg-[#E8F5E9] h-[100vh]">
                 <div className="sticky top-0 z-50">
                     <HeaderPublic />
                 </div>
@@ -64,7 +64,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     // Show error state if kelas not found
     if (error && !selectedKelas) {
         return (
-            <div className="bg-[#E8F5E9] min-h-screen">
+            <div className="bg-[#E8F5E9] h-[100vh]">
                 <div className="sticky top-0 z-50">
                     <HeaderPublic />
                 </div>

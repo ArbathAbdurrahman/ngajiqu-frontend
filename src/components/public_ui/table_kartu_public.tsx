@@ -109,7 +109,7 @@ export function TableKartuPublic() {
                                 return (
                                     <th
                                         key={index}
-                                        className={`px-2 py-1.5 text-center font-medium text-gray-500 uppercase tracking-wider text-[10px] ${width} ${head === "Tanggal" ? "cursor-pointer hover:bg-gray-100" : ""
+                                        className={`px-2 py-1.5 text-center font-medium text-gray-500 uppercase tracking-wider text-[10px] sm:text-sm ${width} ${head === "Tanggal" ? "cursor-pointer hover:bg-gray-100" : ""
                                             }`}
                                         onClick={head === "Tanggal" ? handleDateSort : undefined}
                                     >
@@ -145,19 +145,19 @@ export function TableKartuPublic() {
                                     key={index}
                                     className="hover:bg-gray-50 transition-colors duration-200"
                                 >
-                                    <td className="px-2 py-1.5 text-[10px] text-gray-900 w-[18%] align-top text-center">
+                                    <td className="px-2 py-1.5 text-[10px] sm:text-sm text-gray-900 w-[18%] align-top text-center">
                                         <div className="break-words">{kartu.tanggal.toLocaleDateString('id-ID')}</div>
                                     </td>
-                                    <td className="px-2 py-1.5 text-[10px] text-gray-900 w-[20%] align-top text-center">
+                                    <td className="px-2 py-1.5 text-[10px] sm:text-sm text-gray-900 w-[20%] align-top text-center">
                                         <div className="break-words">{kartu.bab}</div>
                                     </td>
-                                    <td className="px-2 py-1.5 text-[10px] text-gray-900 text-center w-[12%] align-top">
+                                    <td className="px-2 py-1.5 text-[10px] sm:text-sm text-gray-900 text-center w-[12%] align-top">
                                         <div className="break-words">{kartu.halaman}</div>
                                     </td>
-                                    <td className="px-2 py-1.5 text-[10px] text-gray-900 w-[20%] align-top text-center">
+                                    <td className="px-2 py-1.5 text-[10px] sm:text-sm text-gray-900 w-[20%] align-top text-center">
                                         <div className="break-words">{kartu.pengampu}</div>
                                     </td>
-                                    <td className="px-2 py-1.5 text-[10px] text-gray-900 w-[30%] align-top text-center">
+                                    <td className="px-2 py-1.5 text-[10px] sm:text-sm text-gray-900 w-[30%] align-top text-center">
                                         <div className="break-words">{kartu.catatan || 'Tidak ada catatan'}</div>
                                     </td>
                                 </tr>

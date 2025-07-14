@@ -250,7 +250,7 @@ export function BuilderKelas() {
                     onTouchStart={(e) => handleTouchStart(e, kelas)}
                     onTouchEnd={handleTouchEnd}
                     onTouchMove={handleTouchMove}
-                    className={`flex flex-col rounded-xl gap-2 border-2 border-[#C8B560] bg-white overflow-clip cursor-pointer hover:shadow-lg transition-shadow ${isLongPressing ? 'ring-2 ring-red-400' : ''
+                    className={`flex flex-col rounded-xl h-fit gap-2 border-2 border-[#C8B560] bg-white overflow-clip cursor-pointer hover:shadow-lg transition-shadow ${isLongPressing ? 'ring-2 ring-red-400' : ''
                         }`}
                     style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
                 >
