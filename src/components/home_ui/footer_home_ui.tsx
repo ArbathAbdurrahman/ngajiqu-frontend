@@ -5,7 +5,7 @@ import Link from "next/link";
 export function FooterUI() {
     return (
         <footer
-            className="flex flex-col w-full py-8 gap-8 sm:px-20 px-6 bg-white"
+            className="flex flex-col w-full py-8 gap-8 px-6 bg-white"
         >
             <div className="flex sm:flex-row flex-col gap-8">
                 <div className="flex flex-col gap-6 flex-1">

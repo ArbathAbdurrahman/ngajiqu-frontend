@@ -9,7 +9,7 @@ export function IntroHomeUI() {
             </div>
             <div className="flex flex-1">
                 <Image
-                    alt="kopkas"
+                    alt="NgajiQu"
                     src="/welcome.png"
                     width={1600}
                     height={1600}

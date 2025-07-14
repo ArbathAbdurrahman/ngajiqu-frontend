@@ -56,14 +56,14 @@ export default function Page() {
 
                     <div className="w-full pt-4 pb-2 flex gap-2 justify-end px-2.5 bg-[#E8F5E9]">
                         <SearchInput
-                            className="flex flex-1"
+                            
                             value={searchQuery}
                             onChange={handleSearchChange}
                             placeholder="Cari santri..."
                         />
                         <PlusButton
                             title='Tambah Santri'
-                            className="flex flex-1"
+                            
                             onClick={openSantri}
                         />
                         <AddSantriOverlay />
