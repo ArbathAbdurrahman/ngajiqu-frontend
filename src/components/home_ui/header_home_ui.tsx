@@ -15,7 +15,7 @@ export function HeaderHomeUI() {
     );
 
     return (
-        <div className="flex items-center flex-row sm:px-20 px-3 py-2 justify-between w-full h-fit z-50 top-0 bg-white">
+        <div className="flex items-center flex-row px-3 py-2 justify-between w-full h-fit z-50 top-0 bg-white">
             <div className="flex items-center gap-2">
                 <Link
                     href="/"

@@ -5,6 +5,7 @@ import { FiturHomeUI } from "@/components/home_ui/fitur_home_ui";
 import { FooterUI } from "@/components/home_ui/footer_home_ui";
 import { HeaderHomeUI } from "@/components/home_ui/header_home_ui";
 import { IntroHomeUI } from "@/components/home_ui/intro_home_ui";
+import { PWAInstallPrompt } from "@/components/home_ui/manifest";
 import { useGetKelasBySlug } from "@/store/kelas_store";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -53,16 +54,19 @@ export default function Home() {
   };
 
   return (
-    <main className="flex flex-col h-full">
+<main className="flex flex-col h-full">
       <HeaderHomeUI />
       <div>
+        <PWAInstallPrompt/>
         <IntroHomeUI />
-        <div className="pb-5 px-10 bg-[#E8F5E9]">
-          <SearchInput
-            placeholder="Masukkan Kode Kelas..."
-            onSearch={handleSearch}
-            disabled={isSearching}
-          />
+        <div className="pb-5 px-4 sm:px-10 bg-[#E8F5E9] flex justify-center">
+          <div className="w-full sm:w-auto sm:min-w-[400px] sm:max-w-[500px]">
+            <SearchInput
+              placeholder="Masukkan Kode Kelas..."
+              onSearch={handleSearch}
+              disabled={isSearching}
+            />
+          </div>
         </div>
         <div className="w-full h-[18px] bg-[#4CAF50]" />
         <FiturHomeUI />
