@@ -1,6 +1,5 @@
 'use client'
 
-import { TableKartu } from "@/components/kartu_santri/table_kartu";
 import { useSelectedSantri } from "@/store/santri_store";
 import { useEffect, useState } from "react";
 import { MyCard } from "@/components/global_ui/my_card";
