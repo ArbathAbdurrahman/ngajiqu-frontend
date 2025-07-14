@@ -1,59 +1,38 @@
 'use client'
 
-import { Trash2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { IconButton, Message, useToaster } from "rsuite";
 import { useEffect, useState } from "react";
 import {
     useSantriList,
-    useSelectedSantri,
     useSetSelectedSantri,
     useSantriError,
     useGetSantri,
-    useDeleteSantri,
     useGetLatestKartu,
     useGetKartu,
     useSantriStore
 } from "@/store/santri_store";
 import { useSelectedKelas } from "@/store/kelas_store";
-import { MyModal } from "@/components/global_ui/my_modal";
 
-// Define local Santri interface
-interface Santri {
-    id: string;
-    nama: string;
-    kelas: number;
-    kelas_nama: string;
-}
-
-interface SantriBuilderProps {
+interface SantriPublicProps {
     searchQuery?: string;
     onClearSearch?: () => void;
 }
 
-export function SantriBuilder({ searchQuery = '', onClearSearch }: SantriBuilderProps) {
+export function SantriPublic({ searchQuery = '', onClearSearch }: SantriPublicProps) {
     const router = useRouter();
     const params = useParams();
-    const toaster = useToaster();
     const [isClient, setIsClient] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    // State untuk modal dan delete
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [santriToDelete, setSantriToDelete] = useState<{ id: string, nama: string } | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
-
     // Global state selectors
     const santriList = useSantriList();
-    const selectedSantri = useSelectedSantri();
     const setSelectedSantri = useSetSelectedSantri();
     const selectedKelas = useSelectedKelas();
     const error = useSantriError();
 
     // Actions
     const getSantri = useGetSantri();
-    const deleteSantri = useDeleteSantri();
     const getLatestKartu = useGetLatestKartu();
     const getKartu = useGetKartu();
 
@@ -128,52 +107,16 @@ export function SantriBuilder({ searchQuery = '', onClearSearch }: SantriBuilder
         fetchData();
     }, [isClient, selectedKelas?.slug, getSantri, getKartu]);
 
-    const handleCardClick = (santri: Santri) => {
+    const handleCardClick = (santri: { id: string; nama: string; kelas: number; kelas_nama: string }) => {
         // Set selected santri to global state
         setSelectedSantri(santri);
 
-        // Navigate ke halaman santri detail
         const kelas = params.kelas;
 
-        router.push(`/dashboard/${kelas}/${santri.id}`);
-    };
+        router.push(`/${kelas}/${santri.id}`);
 
-    const handleDeleteClick = (santriId: string, santriNama: string) => {
-        setSantriToDelete({ id: santriId, nama: santriNama });
-        setIsDeleteModalOpen(true);
-    };
-
-    const handleConfirmDelete = async () => {
-        if (!santriToDelete) return;
-
-        setIsDeleting(true);
-        try {
-            await deleteSantri(santriToDelete.id);
-            console.log('Santri deleted successfully:', santriToDelete.nama);
-
-            // Clear selected santri if the deleted santri was selected
-            if (selectedSantri?.id === santriToDelete.id) {
-                setSelectedSantri(null);
-            }
-
-            setIsDeleteModalOpen(false);
-            setSantriToDelete(null);
-        } catch (error) {
-            console.error('Failed to delete santri:', error);
-            toaster.push(
-                <Message type="error" showIcon closable>
-                    Gagal menghapus santri. Silakan coba lagi.
-                </Message>,
-                { placement: 'topCenter' }
-            );
-        } finally {
-            setIsDeleting(false);
-        }
-    };
-
-    const handleCancelDelete = () => {
-        setIsDeleteModalOpen(false);
-        setSantriToDelete(null);
+        // Log for debugging
+        console.log('🔄 [SantriPublic] Selected santri:', santri.nama, 'ID:', santri.id);
     };
 
     // Don't render until client-side for SSR safety
@@ -263,7 +206,7 @@ export function SantriBuilder({ searchQuery = '', onClearSearch }: SantriBuilder
                             <div
                                 key={santri.id}
                                 onClick={() => handleCardClick(santri)}
-                                className="flex flex-col w-full bg-white border-2 border-[#C8B560] rounded-xl overflow-clip cursor-pointer hover:shadow-lg transition-shadow"
+                                className="flex flex-col w-full bg-white border-2 border-[#C8B560] rounded-xl overflow-clip cursor-pointer hover:shadow-lg hover:border-[#B89E4F] transition-all duration-200"
                             >
                                 <div className="flex flex-row justify-between items-start">
                                     <div className="flex flex-col p-3">
@@ -280,14 +223,6 @@ export function SantriBuilder({ searchQuery = '', onClearSearch }: SantriBuilder
                                             </>
                                         )}
                                     </div>
-                                    <IconButton
-                                        onClick={(e) => {
-                                            e.stopPropagation(); // Prevent card click
-                                            handleDeleteClick(santri.id, santri.nama);
-                                        }}
-                                        appearance="subtle"
-                                        icon={<Trash2 color="red" />}
-                                    />
                                 </div>
                                 <div className="flex flex-row bg-[#C8B560] p-3 justify-between">
                                     <div className="flex flex-col flex-1">
@@ -311,26 +246,6 @@ export function SantriBuilder({ searchQuery = '', onClearSearch }: SantriBuilder
                     })}
                 </div>
             )}
-
-            {/* Delete Confirmation Modal */}
-            <MyModal
-                isOpen={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
-                title="APAKAH ANDA YAKIN INGIN MENGHAPUS SANTRI INI?"
-                onConfirm={handleConfirmDelete}
-                onCancel={handleCancelDelete}
-                isLoading={isDeleting}
-                size="sm"
-                confirmText="IYA"
-                cancelText="TIDAK"
-                noteText="Note: Data santri yang dihapus tidak bisa dikembalikan*"
-            >
-                {santriToDelete && (
-                    <p className="text-center text-gray-700">
-                        Santri: <strong>&ldquo;{santriToDelete.nama}&rdquo;</strong>
-                    </p>
-                )}
-            </MyModal>
         </>
     );
 

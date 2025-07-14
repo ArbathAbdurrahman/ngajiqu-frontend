@@ -1,6 +1,16 @@
 'use client'
 
 import { useKelasStore, useKelasList, useKelasLoading, useKelasError, useSetSelectedKelas, useDeleteKelas } from "@/store/kelas_store";
+
+// Define local Kelas interface
+interface Kelas {
+    id: string;
+    nama: string;
+    deskripsi?: string;
+    slug: string;
+    author?: number;
+    santri_count?: number;
+}
 import { useOverlayEditKelas } from "@/store/overlay_status";
 import { Edit, Link } from "lucide-react";
 import Image from "next/image";
@@ -40,9 +50,9 @@ export function BuilderKelas() {
 
     useEffect(() => {
         getKelas();
-    }, []); // Empty dependency array
+    }, [getKelas]); // Empty dependency array
 
-    const handleCardClick = (kelas: any) => {
+    const handleCardClick = (kelas: Kelas) => {
         // Set selected kelas di global state
         setSelectedKelas(kelas);
         // Navigate ke halaman kelas menggunakan slug sebagai path
@@ -52,7 +62,7 @@ export function BuilderKelas() {
     const handleCopyLink = (e: React.MouseEvent, link: string) => {
         e.stopPropagation(); // Prevent card click
         // Buat full URL untuk copy
-        const fullLink = `${window.location.origin}/dashboard/${link}`;
+        const fullLink = `${window.location.origin}/${link}`;
 
         navigator.clipboard.writeText(fullLink).then(() => {
             console.log('✅ Copy successful');
@@ -74,7 +84,7 @@ export function BuilderKelas() {
         });
     };
 
-    const handleEditClick = (e: React.MouseEvent, kelas: any) => {
+    const handleEditClick = (e: React.MouseEvent, kelas: Kelas) => {
         e.stopPropagation(); // Prevent card click
         setSelectedKelas(kelas); // Set kelas yang akan diedit
         openEditKelas(); // Buka modal edit
@@ -86,7 +96,7 @@ export function BuilderKelas() {
         setIsDeleteModalOpen(true);
     };
 
-    const handleMouseDown = (e: React.MouseEvent, kelas: any) => {
+    const handleMouseDown = (e: React.MouseEvent, kelas: Kelas) => {
         setIsLongPressing(false);
         setStartPos({ x: e.clientX, y: e.clientY });
         const timer = setTimeout(() => {
@@ -130,7 +140,7 @@ export function BuilderKelas() {
     };
 
     // Touch handlers for mobile
-    const handleTouchStart = (e: React.TouchEvent, kelas: any) => {
+    const handleTouchStart = (e: React.TouchEvent, kelas: Kelas) => {
         setIsLongPressing(false);
         const touch = e.touches[0];
         setStartPos({ x: touch.clientX, y: touch.clientY });
@@ -178,7 +188,7 @@ export function BuilderKelas() {
 
             toaster.push(
                 <Message type="success" showIcon closable>
-                    Kelas "{kelasToDelete.nama}" berhasil dihapus.
+                    Kelas &ldquo;{kelasToDelete.nama}&rdquo; berhasil dihapus.
                 </Message>,
                 { placement: 'topCenter' }
             );
@@ -294,7 +304,7 @@ export function BuilderKelas() {
                 <div className="py-4">
                     <p className="text-gray-700">
                         Apakah Anda yakin ingin menghapus kelas{' '}
-                        <span className="font-semibold">"{kelasToDelete?.nama}"</span>?
+                        <span className="font-semibold">&ldquo;{kelasToDelete?.nama}&rdquo;</span>?
                     </p>
                     <p className="text-red-600 text-sm mt-2">
                         ⚠️ Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data santri dan kartu yang terkait.

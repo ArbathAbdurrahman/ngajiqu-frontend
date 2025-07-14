@@ -144,7 +144,7 @@ export const useAktivitasStore = create<AktivitasStore>((set) => ({
             }
 
             // Mapping ke format Aktivitas
-            const aktivitasList: Aktivitas[] = aktivitasResponse.map((aktivitas: any) => ({
+            const aktivitasList: Aktivitas[] = aktivitasResponse.map((aktivitas: { id: string; kelas: number; kelas_nama: string; nama: string; deskripsi?: string; tanggal: string }) => ({
                 id: aktivitas.id.toString(),
                 kelas: aktivitas.kelas,
                 kelas_nama: aktivitas.kelas_nama,

@@ -38,8 +38,6 @@ export function HeaderHomeUI() {
                     </div>
                 ) : (
                     <div>
-
-
                     </div>
                 )}
 

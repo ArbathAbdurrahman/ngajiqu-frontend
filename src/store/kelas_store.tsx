@@ -100,6 +100,7 @@ interface KelasAction {
     addKelas: ({ nama, slug, deskripsi }: Omit<Kelas, 'id' | 'link'>) => Promise<void>;
     getKelas: () => Promise<void>;
     getKelasById: (id: string) => Promise<void>;
+    getKelasBySlug: (slug: string) => Promise<void>;
     editKelas: (id: string, data: Partial<Kelas>) => Promise<void>;
     deleteKelas: (slug: string) => Promise<void>;
     setSelectedKelas: (kelas: Kelas | null) => void;
@@ -115,7 +116,7 @@ type KelasStore = KelasState & KelasAction;
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
-export const useKelasStore = create<KelasStore>((set, get) => ({
+export const useKelasStore = create<KelasStore>((set) => ({
     // Initial State with localStorage persistence
     kelasList: [],
     selectedKelas: getSelectedKelasFromStorage(),
@@ -222,7 +223,7 @@ export const useKelasStore = create<KelasStore>((set, get) => ({
             const kelasResponse = await response.json();
 
             // Ambil data dari results array dan mapping ke format Kelas
-            const kelasList: Kelas[] = kelasResponse.results.map((kelas: any) => ({
+            const kelasList: Kelas[] = kelasResponse.results.map((kelas: { id: string; nama: string; deskripsi?: string; slug: string; author: number; santri_count: number }) => ({
                 id: kelas.id.toString(), // Konversi id ke string
                 nama: kelas.nama,
                 alamat: '', // API tidak mengembalikan alamat, set default kosong
@@ -274,6 +275,56 @@ export const useKelasStore = create<KelasStore>((set, get) => ({
         } catch (error) {
             set({
                 error: error instanceof Error ? error.message : 'Failed to fetch kelas',
+                loading: false,
+            });
+            throw error;
+        }
+    },
+
+    // Get kelas by slug
+    getKelasBySlug: async (slug: string) => {
+        try {
+            set({ loading: true, error: null });
+
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+
+            const response = await fetch(`${API_BASE_URL}/kelas/kelas/${slug}`, {
+                method: 'GET',
+                headers,
+            });
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error(`Kelas dengan slug '${slug}' tidak ditemukan.`);
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const kelasData = await response.json();
+
+            // Mapping response ke format Kelas yang konsisten
+            const kelas: Kelas = {
+                id: kelasData.id.toString(),
+                nama: kelasData.nama,
+                deskripsi: kelasData.deskripsi || '',
+                slug: kelasData.slug,
+                author: kelasData.author,
+                santri_count: kelasData.santri_count || 0,
+            };
+
+            set({
+                selectedKelas: kelas,
+                loading: false,
+            });
+
+            // Also save to localStorage for persistence
+            saveSelectedKelasToStorage(kelas);
+
+        } catch (error) {
+            set({
+                error: error instanceof Error ? error.message : 'Failed to fetch kelas by slug',
                 loading: false,
             });
             throw error;
@@ -358,6 +409,7 @@ export const useSelectedKelas = () => useKelasStore((state) => state.selectedKel
 export const useAddKelas = () => useKelasStore((state) => state.addKelas);
 export const useGetKelas = () => useKelasStore((state) => state.getKelas);
 export const useGetKelasById = () => useKelasStore((state) => state.getKelasById);
+export const useGetKelasBySlug = () => useKelasStore((state) => state.getKelasBySlug);
 export const useEditKelas = () => useKelasStore((state) => state.editKelas);
 export const useDeleteKelas = () => useKelasStore((state) => state.deleteKelas);
 export const useSetSelectedKelas = () => useKelasStore((state) => state.setSelectedKelas);
@@ -373,6 +425,7 @@ export const useKelasActions = () => {
     const addKelas = useKelasStore((state) => state.addKelas);
     const getKelas = useKelasStore((state) => state.getKelas);
     const getKelasById = useKelasStore((state) => state.getKelasById);
+    const getKelasBySlug = useKelasStore((state) => state.getKelasBySlug);
     const editKelas = useKelasStore((state) => state.editKelas);
     const deleteKelas = useKelasStore((state) => state.deleteKelas);
     const setSelectedKelas = useKelasStore((state) => state.setSelectedKelas);
@@ -387,6 +440,7 @@ export const useKelasActions = () => {
         addKelas,
         getKelas,
         getKelasById,
+        getKelasBySlug,
         editKelas,
         deleteKelas,
         setSelectedKelas,
@@ -396,5 +450,5 @@ export const useKelasActions = () => {
         clearError,
         generateSlug,
         validateSlugInput,
-    }), [addKelas, getKelas, getKelasById, editKelas, deleteKelas, setSelectedKelas, clearSelectedKelas, setLoading, setError, clearError, generateSlug, validateSlugInput]);
+    }), [addKelas, getKelas, getKelasById, getKelasBySlug, editKelas, deleteKelas, setSelectedKelas, clearSelectedKelas, setLoading, setError, clearError, generateSlug, validateSlugInput]);
 };

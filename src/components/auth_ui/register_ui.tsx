@@ -5,8 +5,8 @@ import { FilledButton } from "../global_ui/filled_button";
 import { MyTextField } from "../global_ui/my_text_field";
 import { MyCard } from "../global_ui/my_card";
 import { useAuthActions, useAuthError, useAuthLoading } from "@/store/auth_store";
-import React, { useState, useEffect } from "react";
-import { Message } from "rsuite";
+import React, { useState, useEffect, useRef } from "react";
+import { Message, useToaster } from "rsuite";
 import { useGuestRoute } from "@/hooks/useAuthRedirect";
 import { X } from "lucide-react";
 
@@ -24,7 +24,7 @@ const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose }) => {
                 {/* Header */}
                 <div className="bg-green-500 text-white p-4 flex items-center justify-between">
                     <h2 className="text-lg font-semibold">Syarat dan Ketentuan</h2>
-                    <button 
+                    <button
                         onClick={onClose}
                         className="text-white hover:bg-green-600 p-1 rounded"
                     >
@@ -43,7 +43,7 @@ const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose }) => {
                             <div>
                                 <h3 className="font-semibold text-gray-800 mb-2">1. Tujuan Penggunaan</h3>
                                 <p className="text-gray-700">
-                                    NgajiQu ini disediakan untuk membantu penggunanya dalam belajar Al-Qur'an, menghafal atau mengembangkan kegiatan belajar mengajar, dan administrasi santri.
+                                    NgajiQu ini disediakan untuk membantu penggunanya dalam belajar Al-Qur&apos;an, menghafal atau mengembangkan kegiatan belajar mengajar, dan administrasi santri.
                                 </p>
                             </div>
 
@@ -102,16 +102,18 @@ export function RegisterUI(): React.JSX.Element {
     const { register, clearError } = useAuthActions();
     const isLoading = useAuthLoading();
     const error = useAuthError();
+    const toaster = useToaster();
+    const errorShownRef = useRef<string | null>(null);
 
     // Redirect authenticated users to dashboard
     useGuestRoute();
 
-    const [authData, setAuthData] = useState<{ 
-        email: string, 
-        password: string, 
-        confirmPass: string, 
+    const [authData, setAuthData] = useState<{
+        email: string,
+        password: string,
+        confirmPass: string,
         name: string,
-        terms: boolean 
+        terms: boolean
     }>({
         email: "",
         password: "",
@@ -128,18 +130,40 @@ export function RegisterUI(): React.JSX.Element {
 
     const [showTermsModal, setShowTermsModal] = useState<boolean>(false);
 
+    // Show error toaster when error occurs - with duplicate prevention
+    useEffect(() => {
+        if (error && error !== errorShownRef.current) {
+            errorShownRef.current = error;
+
+            toaster.push(
+                <Message type="error" showIcon closable>
+                    <strong>Registrasi Gagal!</strong> {error}
+                </Message>,
+                { placement: 'topCenter' }
+            );
+
+            // Clear error setelah delay singkat
+            const timeoutId = setTimeout(() => {
+                clearError();
+                errorShownRef.current = null;
+            }, 100);
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [error, clearError, toaster]);
+
     // Clear error when user starts typing
     useEffect(() => {
         if (error) {
             clearError();
         }
-    }, [authData.email, authData.password, authData.name]);
+    }, [authData.email, authData.password, authData.name, clearError, error]);
 
     const handleRegister = async (e: React.FormEvent): Promise<void> => {
         e.preventDefault();
 
         setValidationErrors({});
-        clearError();
+        // Tidak perlu clearError() karena auth store sudah clear otomatis
 
         const errors: { confirmPass?: string, password?: string, terms?: string } = {};
 
@@ -160,12 +184,25 @@ export function RegisterUI(): React.JSX.Element {
             return;
         }
 
-        await register({
-            username: authData.name,
-            email: authData.email,
-            password1: authData.password,
-            password2: authData.confirmPass,
-        });
+        try {
+            await register({
+                username: authData.name,
+                email: authData.email,
+                password1: authData.password,
+                password2: authData.confirmPass,
+            });
+
+            // Show success message
+            toaster.push(
+                <Message type="success" showIcon closable>
+                    <strong>Registrasi Berhasil!</strong> Selamat datang di NgajiQu.
+                </Message>,
+                { placement: 'topCenter' }
+            );
+        } catch (error) {
+            // Error akan ditangani oleh useEffect di atas
+            console.error('Register error:', error);
+        }
     }
 
     return (
@@ -174,14 +211,6 @@ export function RegisterUI(): React.JSX.Element {
                 <div className="flex flex-col gap-3 items-center">
                     <h1 className="text-xl font-semibold">Daftar ke NgajiQu</h1>
                 </div>
-
-                {error && (
-                    <div className="w-full sm:w-[400px]">
-                        <Message type="error" showIcon>
-                            <strong>Error!</strong> {error}
-                        </Message>
-                    </div>
-                )}
 
                 <div className="flex flex-col gap-4 sm:w-[400px] w-[290px]">
                     <MyTextField
@@ -213,7 +242,7 @@ export function RegisterUI(): React.JSX.Element {
                             clearError();
                         }}
                         value={authData.password}
-                        // error={validationErrors.password}
+                    // error={validationErrors.password}
                     />
                     <MyTextField
                         title="Konfirmasi Password"
@@ -226,7 +255,7 @@ export function RegisterUI(): React.JSX.Element {
                             clearError();
                         }}
                         value={authData.confirmPass}
-                        // error={validationErrors.confirmPass}
+                    // error={validationErrors.confirmPass}
                     />
 
                     <div className="flex flex-col items-start gap-1">
@@ -277,9 +306,9 @@ export function RegisterUI(): React.JSX.Element {
                 </div>
             </MyCard>
 
-            <TermsModal 
-                isOpen={showTermsModal} 
-                onClose={() => setShowTermsModal(false)} 
+            <TermsModal
+                isOpen={showTermsModal}
+                onClose={() => setShowTermsModal(false)}
             />
         </>
     )

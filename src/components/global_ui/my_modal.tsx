@@ -1,5 +1,3 @@
-import { MyCard } from "./my_card";
-import { FilledButton } from "./filled_button";
 import { ReactNode } from "react";
 
 interface ModalProps {

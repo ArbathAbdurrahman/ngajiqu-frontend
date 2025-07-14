@@ -5,6 +5,21 @@ interface User {
     id: string;
     email: string;
     name: string;
+    username?: string;
+    description?: string;
+}
+
+interface UserProfile {
+    user: {
+        username: string;
+        first_name: string;
+        last_name: string;
+        email: string;
+    };
+    description: string;
+    profile_image: string | null;
+    address: string;
+    contact: string;
 }
 
 interface AuthState {
@@ -14,6 +29,7 @@ interface AuthState {
     isAuth: boolean;
     isLoading: boolean;
     error: string | null;
+    userProfile: UserProfile | null;
 }
 
 interface RegiseterData {
@@ -32,6 +48,10 @@ interface AuthActions {
     initializeAuth: () => Promise<void>;
     clearErorr: () => void;
     setLoading: (loading: boolean) => void;
+    getUser: () => Promise<void>;
+    patchUsername: (username: string) => Promise<void>;
+    patchDescription: (description: string) => Promise<void>;
+    patchEmail: (email: string) => Promise<void>;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -52,6 +72,19 @@ const getRefreshTokenFromStorage = (): string | null => {
     return localStorage.getItem('refreshToken');
 };
 
+// Utility functions to set/remove cookies for middleware
+const setCookie = (name: string, value: string, days: number = 7) => {
+    if (typeof document === 'undefined') return;
+    const expires = new Date();
+    expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+};
+
+const removeCookie = (name: string) => {
+    if (typeof document === 'undefined') return;
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=Lax`;
+};
+
 export const useAuthStore = create<AuthStore>()(
     persist(
         (set, get) => ({
@@ -61,6 +94,7 @@ export const useAuthStore = create<AuthStore>()(
             isAuth: false,
             isLoading: false,
             error: null,
+            userProfile: null,
 
             login: async (email: string, password: string) => {
                 try {
@@ -79,7 +113,24 @@ export const useAuthStore = create<AuthStore>()(
                     console.log('Response ok:', response.ok); // Debug log
 
                     if (!response.ok) {
-                        throw new Error("Login failed");
+                        // Parse error message from API response
+                        let errorMessage = "Login failed";
+                        try {
+                            const errorData = await response.json();
+                            // Check common API error message fields
+                            if (errorData.detail) {
+                                errorMessage = errorData.detail;
+                            } else if (errorData.message) {
+                                errorMessage = errorData.message;
+                            } else if (errorData.error) {
+                                errorMessage = errorData.error;
+                            } else if (typeof errorData === 'string') {
+                                errorMessage = errorData;
+                            }
+                        } catch (parseError) {
+                            console.log('Could not parse error response:', parseError);
+                        }
+                        throw new Error(errorMessage);
                     }
 
                     //response data
@@ -99,12 +150,14 @@ export const useAuthStore = create<AuthStore>()(
                         error: null,
                     });
 
-                    // Store tokens in localStorage
+                    // Store tokens in localStorage and cookies
                     if (accessToken) {
                         localStorage.setItem('accessToken', accessToken);
+                        setCookie('accessToken', accessToken);
                     }
                     if (refreshToken) {
                         localStorage.setItem('refreshToken', refreshToken);
+                        setCookie('refreshToken', refreshToken);
                     }
 
                 } catch (error) {
@@ -132,7 +185,24 @@ export const useAuthStore = create<AuthStore>()(
                     });
 
                     if (!response.ok) {
-                        throw new Error("Registration failed");
+                        // Parse error message from API response
+                        let errorMessage = "Registration failed";
+                        try {
+                            const errorData = await response.json();
+                            // Check common API error message fields
+                            if (errorData.detail) {
+                                errorMessage = errorData.detail;
+                            } else if (errorData.message) {
+                                errorMessage = errorData.message;
+                            } else if (errorData.error) {
+                                errorMessage = errorData.error;
+                            } else if (typeof errorData === 'string') {
+                                errorMessage = errorData;
+                            }
+                        } catch (parseError) {
+                            console.log('Could not parse error response:', parseError);
+                        }
+                        throw new Error(errorMessage);
                     }
 
                     //response data
@@ -152,12 +222,14 @@ export const useAuthStore = create<AuthStore>()(
                         error: null,
                     });
 
-                    // Store tokens in localStorage
+                    // Store tokens in localStorage and cookies
                     if (accessToken) {
                         localStorage.setItem('accessToken', accessToken);
+                        setCookie('accessToken', accessToken);
                     }
                     if (refreshToken) {
                         localStorage.setItem('refreshToken', refreshToken);
+                        setCookie('refreshToken', refreshToken);
                     }
 
                 } catch (error) {
@@ -199,15 +271,25 @@ export const useAuthStore = create<AuthStore>()(
                     refreshToken: null,
                     isAuth: false,
                     error: null,
+                    userProfile: null,
                 });
 
-                // Clear both tokens from localStorage
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
+                // Clear both tokens from localStorage and cookies
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
+                    localStorage.removeItem('selectedKelas');
+                    localStorage.removeItem('selectedSantri');
+                }
 
-                // Clear selected kelas and santri from localStorage
-                localStorage.removeItem('selectedKelas');
-                localStorage.removeItem('selectedSantri');
+                // Clear cookies
+                removeCookie('accessToken');
+                removeCookie('refreshToken');
+
+                // Force page reload to ensure complete cleanup - redirect to root
+                if (typeof window !== 'undefined') {
+                    window.location.href = '/';
+                }
             },
 
             refreshTokens: async () => {
@@ -248,12 +330,14 @@ export const useAuthStore = create<AuthStore>()(
                         error: null,
                     });
 
-                    // Update localStorage with new tokens
+                    // Update localStorage and cookies with new tokens
                     if (newAccessToken) {
                         localStorage.setItem('accessToken', newAccessToken);
+                        setCookie('accessToken', newAccessToken);
                     }
                     if (newRefreshToken) {
                         localStorage.setItem('refreshToken', newRefreshToken);
+                        setCookie('refreshToken', newRefreshToken);
                     }
 
                 } catch (error) {
@@ -269,15 +353,17 @@ export const useAuthStore = create<AuthStore>()(
                         error: error instanceof Error ? error.message : 'Token refresh failed',
                     });
 
-                    // Clear localStorage
+                    // Clear localStorage and cookies
                     localStorage.removeItem('accessToken');
                     localStorage.removeItem('refreshToken');
+                    removeCookie('accessToken');
+                    removeCookie('refreshToken');
                 }
             },
 
             initializeAuth: async () => {
                 try {
-                    let { accessToken, refreshToken, isAuth } = get();
+                    let { accessToken, refreshToken } = get();
 
                     // If no tokens in state, try to get from localStorage
                     if (!accessToken || !refreshToken) {
@@ -313,15 +399,225 @@ export const useAuthStore = create<AuthStore>()(
                         error: null,
                     });
 
-                    // Clear localStorage
+                    // Clear localStorage and cookies
                     localStorage.removeItem('accessToken');
                     localStorage.removeItem('refreshToken');
+                    removeCookie('accessToken');
+                    removeCookie('refreshToken');
                 }
             },
 
             clearErorr: () => set({ error: null }),
 
             setLoading: (loading: boolean) => set({ isLoading: loading }),
+
+            // Get user profile
+            getUser: async () => {
+                try {
+                    const { accessToken } = get();
+
+                    if (!accessToken) {
+                        throw new Error('No access token available');
+                    }
+
+                    set({ isLoading: true, error: null });
+
+                    const response = await fetch(`${API_BASE_URL}/akun/`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to get user profile: ${response.status}`);
+                    }
+
+                    const profileData: UserProfile = await response.json();
+
+                    // Update user state with profile data
+                    set((state) => ({
+                        userProfile: profileData,
+                        user: {
+                            ...state.user,
+                            username: profileData.user.username,
+                            email: profileData.user.email,
+                            description: profileData.description,
+                        } as User,
+                        isLoading: false,
+                        error: null,
+                    }));
+
+                } catch (error) {
+                    set({
+                        error: error instanceof Error ? error.message : 'Failed to get user profile',
+                        isLoading: false,
+                    });
+                    throw error;
+                }
+            },
+
+            // Update username
+            patchUsername: async (username: string) => {
+                try {
+                    const { accessToken } = get();
+
+                    if (!accessToken) {
+                        throw new Error('No access token available');
+                    }
+
+                    set({ isLoading: true, error: null });
+
+                    const response = await fetch(`${API_BASE_URL}/akun/`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            user: {
+                                username: username
+                            }
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to update username: ${response.status}`);
+                    }
+
+                    const updatedData = await response.json();
+
+                    // Update user state - menggunakan struktur response yang benar
+                    set((state) => ({
+                        user: {
+                            ...state.user,
+                            username: updatedData.user?.username || username,
+                        } as User,
+                        userProfile: state.userProfile ? {
+                            ...state.userProfile,
+                            user: {
+                                ...state.userProfile.user,
+                                username: updatedData.user?.username || username,
+                            }
+                        } : null,
+                        isLoading: false,
+                        error: null,
+                    }));
+
+                } catch (error) {
+                    set({
+                        error: error instanceof Error ? error.message : 'Failed to update username',
+                        isLoading: false,
+                    });
+                    throw error;
+                }
+            },
+
+            // Update description
+            patchDescription: async (description: string) => {
+                try {
+                    const { accessToken } = get();
+
+                    if (!accessToken) {
+                        throw new Error('No access token available');
+                    }
+
+                    set({ isLoading: true, error: null });
+
+                    const response = await fetch(`${API_BASE_URL}/akun/`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ description }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to update description: ${response.status}`);
+                    }
+
+                    const updatedData = await response.json();
+
+                    // Update user state
+                    set((state) => ({
+                        user: {
+                            ...state.user,
+                            description: updatedData.description || description,
+                        } as User,
+                        userProfile: state.userProfile ? {
+                            ...state.userProfile,
+                            description: updatedData.description || description,
+                        } : null,
+                        isLoading: false,
+                        error: null,
+                    }));
+
+                } catch (error) {
+                    set({
+                        error: error instanceof Error ? error.message : 'Failed to update description',
+                        isLoading: false,
+                    });
+                    throw error;
+                }
+            },
+
+            // Update email
+            patchEmail: async (email: string) => {
+                try {
+                    const { accessToken } = get();
+
+                    if (!accessToken) {
+                        throw new Error('No access token available');
+                    }
+
+                    set({ isLoading: true, error: null });
+
+                    const response = await fetch(`${API_BASE_URL}/akun/`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            user: {
+                                email: email
+                            }
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to update email: ${response.status}`);
+                    }
+
+                    const updatedData = await response.json();
+
+                    // Update user state - menggunakan struktur response yang benar
+                    set((state) => ({
+                        user: {
+                            ...state.user,
+                            email: updatedData.user?.email || email,
+                        } as User,
+                        userProfile: state.userProfile ? {
+                            ...state.userProfile,
+                            user: {
+                                ...state.userProfile.user,
+                                email: updatedData.user?.email || email,
+                            }
+                        } : null,
+                        isLoading: false,
+                        error: null,
+                    }));
+
+                } catch (error) {
+                    set({
+                        error: error instanceof Error ? error.message : 'Failed to update email',
+                        isLoading: false,
+                    });
+                    throw error;
+                }
+            },
         }),
         {
             name: 'auth-store',
@@ -330,6 +626,7 @@ export const useAuthStore = create<AuthStore>()(
                 accessToken: state.accessToken,
                 refreshToken: state.refreshToken,
                 isAuth: state.isAuth,
+                userProfile: state.userProfile,
             }),
         }
     )
@@ -342,6 +639,7 @@ export const useAuthError = () => useAuthStore((state) => state.error);
 export const useAuthLoading = () => useAuthStore((state) => state.isLoading);
 export const useAccessToken = () => useAuthStore((state) => state.accessToken);
 export const useRefreshToken = () => useAuthStore((state) => state.refreshToken);
+export const useUserProfile = () => useAuthStore((state) => state.userProfile);
 
 // Actions selector
 export const useAuthActions = () => ({
@@ -352,87 +650,10 @@ export const useAuthActions = () => ({
     initializeAuth: useAuthStore((state) => state.initializeAuth),
     clearError: useAuthStore((state) => state.clearErorr),
     setLoading: useAuthStore((state) => state.setLoading),
+    getUser: useAuthStore((state) => state.getUser),
+    patchUsername: useAuthStore((state) => state.patchUsername),
+    patchDescription: useAuthStore((state) => state.patchDescription),
+    patchEmail: useAuthStore((state) => state.patchEmail),
 });
 
-/*
-Usage Example:
 
-// In your app layout or main component:
-import { useAuthActions } from '@/store/auth_store';
-
-function App() {
-    const { initializeAuth } = useAuthActions();
-    
-    useEffect(() => {
-        // Initialize auth on app start
-        initializeAuth();
-    }, []);
-    
-    return <YourAppContent />;
-}
-
-// In login component:
-import { useAuthActions, useAuthLoading, useAuthError } from '@/store/auth_store';
-
-function LoginPage() {
-    const { login } = useAuthActions();
-    const isLoading = useAuthLoading();
-    const error = useAuthError();
-    
-    const handleLogin = async (email: string, password: string) => {
-        await login(email, password);
-        // Login now returns both accessToken and refreshToken
-    };
-    
-    return <LoginForm onSubmit={handleLogin} loading={isLoading} error={error} />;
-}
-
-// In any protected component:
-import { useIsAuth, useUser, useAuthActions, useAccessToken } from '@/store/auth_store';
-
-function ProtectedComponent() {
-    const isAuth = useIsAuth();
-    const user = useUser();
-    const accessToken = useAccessToken();
-    const { logout, refreshTokens } = useAuthActions();
-    
-    if (!isAuth) {
-        return <Redirect to="/login" />;
-    }
-    
-    return (
-        <div>
-            <h1>Welcome, {user?.name}!</h1>
-            <button onClick={logout}>Logout</button>
-            <button onClick={refreshTokens}>Refresh Tokens</button>
-        </div>
-    );
-}
-
-// API calls with access token:
-function makeAuthenticatedRequest() {
-    const accessToken = useAccessToken();
-    
-    return fetch('/api/protected-endpoint', {
-        headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-        },
-    });
-}
-
-Expected API Response Format:
-// Login & Register response:
-{
-    user: { id: string, email: string, name: string },
-    accessToken: string,  // Short-lived token for API requests
-    refreshToken: string  // Long-lived token for getting new access tokens
-}
-
-// Refresh response:
-{
-    user: { id: string, email: string, name: string },
-    accessToken: string,  // New access token
-    refreshToken: string  // New refresh token (optional, can be same)
-}
-*/

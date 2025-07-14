@@ -51,7 +51,7 @@ export function AktivitasBuilder() {
                 getAktivitas();
             }
         }
-    }, [selectedKelas?.id, getAktivitas, isClient]);
+    }, [selectedKelas?.id, selectedKelas, getAktivitas, isClient]);
 
     // Clear error when component unmounts
     useEffect(() => {
@@ -75,7 +75,7 @@ export function AktivitasBuilder() {
             // Show success toast
             toaster.push(
                 <Message showIcon type="success" closable>
-                    <strong>Berhasil!</strong> Aktivitas "{aktivitasToDelete.nama}" berhasil dihapus.
+                    <strong>Berhasil!</strong> Aktivitas &ldquo;{aktivitasToDelete.nama}&rdquo; berhasil dihapus.
                 </Message>,
                 { placement: 'topEnd' }
             );
@@ -199,7 +199,7 @@ export function AktivitasBuilder() {
             >
                 {aktivitasToDelete && (
                     <p className="text-center text-gray-700">
-                        Aktivitas: <strong>"{aktivitasToDelete.nama}"</strong>
+                        Aktivitas: <strong>&ldquo;{aktivitasToDelete.nama}&rdquo;</strong>
                     </p>
                 )}
             </MyModal>
