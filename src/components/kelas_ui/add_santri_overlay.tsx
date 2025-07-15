@@ -3,7 +3,7 @@ import { MyCard } from "../global_ui/my_card";
 import { MyTextField } from "../global_ui/my_text_field";
 import { useState } from "react";
 import { useOverlaySantri } from "@/store/overlay_status";
-import { useAddSantri, useSantriLoading, useSantriError } from "@/store/santri_store";
+import { useAddSantri, useSantriLoading } from "@/store/santri_store";
 import { useSelectedKelas } from "@/store/kelas_store";
 
 export function AddSantriOverlay() {
@@ -17,7 +17,6 @@ export function AddSantriOverlay() {
     const selectedKelas = useSelectedKelas();
     const addSantri = useAddSantri();
     const loading = useSantriLoading();
-    const error = useSantriError();
 
     if (!isOpen) return null;
 
@@ -84,11 +83,6 @@ export function AddSantriOverlay() {
                         onSubmit={handleSubmit}
                         className="flex flex-col gap-3 w-full"
                     >
-                        {error && (
-                            <div className="text-red-500 text-sm text-center">
-                                {error}
-                            </div>
-                        )}
 
                         <MyTextField
                             title="Nama"

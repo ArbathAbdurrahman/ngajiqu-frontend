@@ -6,7 +6,7 @@ import { MyTextField } from "../global_ui/my_text_field";
 import { useState } from "react";
 import { useOverlayKelas } from "@/store/overlay_status";
 import { MyTextArea } from "../global_ui/my_text_area";
-import { useAddKelas, useGenerateSlug, useValidateSlugInput, useKelasLoading, useKelasError, useClearSelectedKelas } from "@/store/kelas_store";
+import { useAddKelas, useGenerateSlug, useValidateSlugInput, useKelasLoading, useClearSelectedKelas } from "@/store/kelas_store";
 import { Message, useToaster } from "rsuite";
 import { useEffect } from "react";
 
@@ -20,7 +20,6 @@ export function AddKelasOverlay() {
     const generateSlug = useGenerateSlug();
     const validateSlugInput = useValidateSlugInput();
     const loading = useKelasLoading();
-    const error = useKelasError();
     const clearSelectedKelas = useClearSelectedKelas();
 
     const [formData, setFormData] = useState<{ nama: string, deskripsi: string, slug: string }>({
@@ -106,12 +105,6 @@ export function AddKelasOverlay() {
                     onSubmit={handleSubmit}
                     className="flex flex-col gap-3 w-full"
                 >
-                    {/* Show error message if any */}
-                    {error && (
-                        <div className="text-red-500 text-sm text-center p-2 bg-red-50 border border-red-200 rounded">
-                            <strong>Error:</strong> {error}
-                        </div>
-                    )}
 
                     <MyTextField
                         title="Nama Kelas"
@@ -176,7 +169,7 @@ export function AddKelasOverlay() {
                         isLoading={loading}
                         type="submit"
                         width="w-full"
-                        disabled={loading || !!slugError || !formData.nama || !formData.slug || !formData.deskripsi}
+                        disabled={loading || !!slugError}
                     >
                         {loading ? 'Menambahkan...' : 'Tambah'}
                     </FilledButton>

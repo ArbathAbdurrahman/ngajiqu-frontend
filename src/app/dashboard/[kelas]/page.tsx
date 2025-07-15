@@ -12,7 +12,7 @@ import React from "react";
 
 export default function Page() {
     const { open: openAktivitas } = useOverlayAktivitas();
-    const { open: openSantri } = useOverlaySantri()
+    const { open: openSantri } = useOverlaySantri();
 
     const [activeTab, setActiveTab] = React.useState("aktivitas");
     const [searchQuery, setSearchQuery] = React.useState("");
@@ -20,7 +20,7 @@ export default function Page() {
     const tabItems = [
         { label: "Aktivitas", value: "aktivitas" },
         { label: "Santri", value: "santri" }
-    ]
+    ];
 
     const handleSearchChange = (query: string) => {
         setSearchQuery(query);

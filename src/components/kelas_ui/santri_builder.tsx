@@ -1,20 +1,15 @@
 'use client'
 
 import { Trash2 } from "lucide-react";
-import { useParams } from "next/navigation";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { IconButton, Message, useToaster } from "rsuite";
 import { useEffect, useState } from "react";
 import {
     useSantriList,
     useSelectedSantri,
     useSetSelectedSantri,
-    useSantriError,
-    useGetSantri,
     useDeleteSantri,
-    useGetLatestKartu,
-    useGetKartu,
-    useSantriStore
+    useGetLatestKartu
 } from "@/store/santri_store";
 import { useSelectedKelas } from "@/store/kelas_store";
 import { MyModal } from "@/components/global_ui/my_modal";
@@ -37,96 +32,26 @@ export function SantriBuilder({ searchQuery = '', onClearSearch }: SantriBuilder
     const params = useParams();
     const toaster = useToaster();
     const [isClient, setIsClient] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
 
     // State untuk modal dan delete
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [santriToDelete, setSantriToDelete] = useState<{ id: string, nama: string } | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // Global state selectors
+    // Global state selectors (data sudah di-load oleh layout)
     const santriList = useSantriList();
     const selectedSantri = useSelectedSantri();
     const setSelectedSantri = useSetSelectedSantri();
     const selectedKelas = useSelectedKelas();
-    const error = useSantriError();
 
-    // Actions
-    const getSantri = useGetSantri();
+    // Actions (hanya untuk operasi CRUD, bukan fetching)
     const deleteSantri = useDeleteSantri();
     const getLatestKartu = useGetLatestKartu();
-    const getKartu = useGetKartu();
 
     // SSR safety
     useEffect(() => {
         setIsClient(true);
     }, []);
-
-    // Fetch santri data and then kartu data sequentially
-    useEffect(() => {
-        const fetchData = async () => {
-            if (isClient && selectedKelas?.slug) {
-                try {
-                    console.log('🚀 [SantriBuilder] Starting data fetch for kelas:', selectedKelas.slug);
-
-                    // Start loading for both santri and kartu
-                    setIsLoading(true);
-
-                    // First, fetch santri data
-                    console.log('📋 [SantriBuilder] Step 1: Fetching santri data...');
-                    await getSantri(selectedKelas.slug);
-                    console.log('✅ [SantriBuilder] Step 1 Complete: Santri data fetched');
-
-                    // Small delay to ensure state is updated
-                    // await new Promise(resolve => setTimeout(resolve, 100));
-
-                    // Then, fetch kartu data for all santri
-                    // Get fresh santri list from store
-                    const currentSantriList = useSantriStore.getState().santriList;
-                    console.log('📊 [SantriBuilder] Step 2: Found', currentSantriList.length, 'santri, fetching kartu data...');
-
-                    if (currentSantriList.length > 0) {
-                        console.log('📊 [SantriBuilder] Starting individual kartu fetch for each santri...');
-
-                        // Fetch kartu for each santri individually with error handling
-                        for (let i = 0; i < currentSantriList.length; i++) {
-                            const santri = currentSantriList[i];
-                            try {
-                                console.log(`📇 [SantriBuilder] Fetching kartu for santri ${i + 1}/${currentSantriList.length}: ${santri.nama} (ID: ${santri.id})`);
-                                await getKartu(santri.id);
-                                console.log(`✅ [SantriBuilder] Successfully fetched kartu for ${santri.nama}`);
-                            } catch (error) {
-                                console.error(`❌ [SantriBuilder] Failed to fetch kartu for ${santri.nama} (ID: ${santri.id}):`, error);
-                                // Continue with next santri instead of stopping the entire process
-                            }
-                        }
-
-                        console.log('✅ [SantriBuilder] Step 2 Complete: All kartu fetch attempts finished');
-                        console.log('🎯 [SantriBuilder] All data ready - getLatestKartu can now be called safely');
-                    } else {
-                        console.log('⚠️ [SantriBuilder] No santri found, skipping kartu fetch');
-                    }
-
-                    // All loading complete
-                    setIsLoading(false);
-                    console.log('🎉 [SantriBuilder] All data loading complete!');
-
-                    // Debug: Show final kartu data state
-                    const finalKartuList = useSantriStore.getState().kartuList;
-                    console.log('🗂️ [SantriBuilder] Final kartu data count:', finalKartuList.length);
-                    console.log('🗂️ [SantriBuilder] Final kartu data:', finalKartuList);
-
-                } catch (error) {
-                    console.error('❌ [SantriBuilder] Error fetching data:', error);
-                    setIsLoading(false);
-                }
-            } else {
-                console.log('⏳ [SantriBuilder] Waiting for client or selectedKelas...', { isClient, selectedKelas: selectedKelas?.slug });
-            }
-        };
-
-        fetchData();
-    }, [isClient, selectedKelas?.slug, getSantri, getKartu]);
 
     const handleCardClick = (santri: Santri) => {
         // Set selected santri to global state
@@ -179,24 +104,6 @@ export function SantriBuilder({ searchQuery = '', onClearSearch }: SantriBuilder
     // Don't render until client-side for SSR safety
     if (!isClient) {
         return <div>Loading...</div>;
-    }
-
-    // Show loading state until all data is loaded
-    if (isLoading) {
-        return (
-            <div className="flex flex-col items-center w-full justify-center p-8">
-                <div className="text-center">
-                    <p className="text-lg font-medium">Loading data...</p>
-                    <p className="text-sm text-gray-500 mt-1">
-                        Mengambil data santri dan kartu ngaji...
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return <div>Error: {error}</div>;
     }
 
     if (!santriList || santriList.length === 0) {

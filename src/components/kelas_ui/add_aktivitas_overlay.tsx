@@ -8,7 +8,6 @@ import { useOverlayAktivitas } from "@/store/overlay_status";
 import {
     useAddAktivitas,
     useAktivitasLoading,
-    useAktivitasError,
 } from "@/store/aktivitas_store";
 import { useSelectedKelas } from "@/store/kelas_store";
 import { Message, useToaster } from "rsuite";
@@ -21,7 +20,6 @@ export function AddAktivitasOverlay() {
     // Get store data and actions
     const addAktivitas = useAddAktivitas();
     const loading = useAktivitasLoading();
-    const error = useAktivitasError();
 
     const [formData, setFormData] = useState<{
         tanggal: Date;
@@ -114,20 +112,6 @@ export function AddAktivitasOverlay() {
                     onSubmit={handleSubmit}
                     className="flex flex-col gap-3 w-full"
                 >
-                    {/* Show error if no kelas selected */}
-                    {!selectedKelas && (
-                        <div className="text-orange-600 text-sm text-center p-2 bg-orange-50 border border-orange-200 rounded">
-                            <strong>Peringatan:</strong> Silakan pilih kelas terlebih dahulu dari dashboard.
-                        </div>
-                    )}
-
-                    {/* Show error message if any */}
-                    {error && (
-                        <div className="text-red-500 text-sm text-center p-2 bg-red-50 border border-red-200 rounded">
-                            <strong>Error:</strong> {error}
-                        </div>
-                    )}
-
                     <MyDatePicker
                         label="Tanggal"
                         value={formData.tanggal}

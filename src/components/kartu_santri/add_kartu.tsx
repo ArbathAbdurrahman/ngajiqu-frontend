@@ -6,6 +6,7 @@ import { MyCard } from "../global_ui/my_card";
 import { MyTextArea } from "../global_ui/my_text_area";
 import { MyTextField } from "../global_ui/my_text_field";
 import { useSelectedSantri, useAddKartu, useGetKartu } from "@/store/santri_store";
+import { Message, useToaster } from "rsuite";
 
 interface AddKartuOverlayProps {
     isOpen: boolean;
@@ -13,6 +14,8 @@ interface AddKartuOverlayProps {
 }
 
 export function AddKartuOverlay({ isOpen, onClose }: AddKartuOverlayProps) {
+    const toaster = useToaster();
+
     const [formData, setFormData] = useState({
         bab: '',
         halaman: '',
@@ -22,7 +25,6 @@ export function AddKartuOverlay({ isOpen, onClose }: AddKartuOverlayProps) {
     });
 
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const selectedSantri = useSelectedSantri();
     const addKartu = useAddKartu();
@@ -38,17 +40,26 @@ export function AddKartuOverlay({ isOpen, onClose }: AddKartuOverlayProps) {
         e.preventDefault();
 
         if (!selectedSantri) {
-            setError('Silakan pilih santri terlebih dahulu');
+            toaster.push(
+                <Message showIcon type="warning" closable>
+                    <strong>Peringatan!</strong> Silakan pilih santri terlebih dahulu.
+                </Message>,
+                { placement: 'topCenter' }
+            );
             return;
         }
 
         if (!formData.bab.trim() || !formData.halaman.trim() || !formData.pengampu.trim()) {
-            setError('Mohon lengkapi semua field yang wajib diisi');
+            toaster.push(
+                <Message showIcon type="warning" closable>
+                    <strong>Peringatan!</strong> Mohon lengkapi semua field yang wajib diisi.
+                </Message>,
+                { placement: 'topCenter' }
+            );
             return;
         }
 
         setLoading(true);
-        setError(null);
 
         try {
             await addKartu(selectedSantri.id, {
@@ -74,10 +85,25 @@ export function AddKartuOverlay({ isOpen, onClose }: AddKartuOverlayProps) {
                 await getKartu(selectedSantri.id);
             }
 
+            // Show success message
+            toaster.push(
+                <Message showIcon type="success" closable>
+                    <strong>Berhasil!</strong> Kartu santri berhasil ditambahkan.
+                </Message>,
+                { placement: 'topCenter' }
+            );
+
             onClose();
         } catch (error) {
             console.error('Failed to add kartu:', error);
-            setError('Gagal menambahkan kartu. Silakan coba lagi.');
+
+            // Show error message
+            toaster.push(
+                <Message showIcon type="error" closable>
+                    <strong>Error!</strong> {error instanceof Error ? error.message : 'Gagal menambahkan kartu. Silakan coba lagi.'}
+                </Message>,
+                { placement: 'topCenter' }
+            );
         } finally {
             setLoading(false);
         }
@@ -104,19 +130,6 @@ export function AddKartuOverlay({ isOpen, onClose }: AddKartuOverlayProps) {
                     onSubmit={handleSubmit}
                     className="flex flex-col gap-3 w-full"
                 >
-                    {/* Show error if no santri selected */}
-                    {!selectedSantri && (
-                        <div className="text-orange-600 text-sm text-center p-2 bg-orange-50 border border-orange-200 rounded">
-                            <strong>Peringatan:</strong> Silakan pilih santri terlebih dahulu.
-                        </div>
-                    )}
-
-                    {/* Show error message if any */}
-                    {error && (
-                        <div className="text-red-500 text-sm text-center p-2 bg-red-50 border border-red-200 rounded">
-                            <strong>Error:</strong> {error}
-                        </div>
-                    )}
 
                     <MyTextField
                         title="Jilid/Surat"

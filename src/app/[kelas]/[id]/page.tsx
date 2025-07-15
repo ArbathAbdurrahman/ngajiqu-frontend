@@ -32,7 +32,7 @@ export default function Santri() {
                 </div>
             </div>
 
-            <div className="flex flex-col h-screen gap-4 px-1 sm:px-10 py-2">
+            <div className="flex flex-col h-[80vh] gap-4 px-1 sm:px-10 py-2">
                 <MyCard padding="p-3" bgColor="bg-blue-50" >
                     <p className="text-xs text-gray-600">*Tahan (long press) pada baris kartu selama 1 detik untuk menghapus</p>
                 </MyCard>

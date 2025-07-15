@@ -4,19 +4,12 @@ import { PlusButton } from "@/components/global_ui/plus_button";
 import { TableKartu } from "@/components/kartu_santri/table_kartu";
 import { AddKartuOverlay } from "@/components/kartu_santri/add_kartu";
 import { useSelectedSantri } from "@/store/santri_store";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MyCard } from "@/components/global_ui/my_card";
-import { Loader } from "rsuite";
 
 export default function Santri() {
-    const [isClient, setIsClient] = useState(false);
     const [isAddKartuOpen, setIsAddKartuOpen] = useState(false);
     const selectedSantri = useSelectedSantri();
-
-    // SSR safety
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
 
     const handleOpenAddKartu = () => {
         setIsAddKartuOpen(true);
@@ -25,15 +18,6 @@ export default function Santri() {
     const handleCloseAddKartu = () => {
         setIsAddKartuOpen(false);
     };
-
-    // Don't render until client-side for SSR safety
-    if (!isClient) {
-        return <div className="h-screen w-full flex p-10 justify-center items-start">
-            <p className="mb-2">Loading...</p>
-            {/* RSuite Loader */}
-            <Loader size="md" />
-        </div>;
-    }
 
     return (
         <div className=" bg-[#E8F5E9] h-[91vh]">

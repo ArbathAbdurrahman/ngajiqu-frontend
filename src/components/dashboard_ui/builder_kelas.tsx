@@ -1,6 +1,6 @@
 'use client'
 
-import { useKelasStore, useKelasList, useKelasLoading, useKelasError, useSetSelectedKelas, useDeleteKelas } from "@/store/kelas_store";
+import { useKelasList, useSetSelectedKelas, useDeleteKelas } from "@/store/kelas_store";
 
 // Define local Kelas interface
 interface Kelas {
@@ -15,7 +15,7 @@ import { useOverlayEditKelas } from "@/store/overlay_status";
 import { Edit, Link } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Message, useToaster } from "rsuite";
 import { MyModal } from "@/components/global_ui/my_modal";
 
@@ -35,8 +35,6 @@ export function BuilderKelas() {
 
     // GANTI dari useKelasState() ke individual selectors
     const kelasList = useKelasList();
-    const loading = useKelasLoading();
-    const error = useKelasError();
     const setSelectedKelas = useSetSelectedKelas();
 
     // Actions
@@ -44,13 +42,6 @@ export function BuilderKelas() {
 
     // Overlay controls
     const { open: openEditKelas } = useOverlayEditKelas();
-
-    // ATAU gunakan direct store access untuk getKelas
-    const getKelas = useKelasStore((state) => state.getKelas);
-
-    useEffect(() => {
-        getKelas();
-    }, [getKelas]); // Empty dependency array
 
     const handleCardClick = (kelas: Kelas) => {
         // Set selected kelas di global state
@@ -209,33 +200,6 @@ export function BuilderKelas() {
         setIsDeleteModalOpen(false);
         setKelasToDelete(null);
     };
-
-    // Show loading state
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center min-h-[200px]">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#C8B560]"></div>
-            </div>
-        );
-    }
-
-    // Show error state
-    if (error) {
-        return (
-            <div className="flex justify-center items-center min-h-[200px]">
-                <p className="text-red-500">Error: {error}</p>
-            </div>
-        );
-    }
-
-    // Show empty state
-    if (kelasList.length === 0) {
-        return (
-            <div className="flex justify-center items-center min-h-[200px]">
-                <p className="text-gray-500">Belum ada kelas tersedia</p>
-            </div>
-        );
-    }
 
     return (
         <>

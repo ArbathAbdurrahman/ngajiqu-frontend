@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import {
     useKartuList,
     useSelectedSantri,
-    useGetKartu,
     useSortKartuByDate,
     useSantriLoading,
     useSantriError
@@ -29,20 +28,12 @@ export function TableKartuPublic() {
     );
 
     // Actions
-    const getKartu = useGetKartu();
     const sortKartuByDate = useSortKartuByDate();
 
     // SSR safety
     useEffect(() => {
         setIsClient(true);
     }, []);
-
-    // Fetch kartu data when selectedSantri changes
-    useEffect(() => {
-        if (isClient && selectedSantri?.id) {
-            getKartu(selectedSantri.id);
-        }
-    }, [isClient, selectedSantri?.id, getKartu]);
 
     const handleDateSort = () => {
         const newSortOrder = sortOrder === 'asc' ? 'desc' : 'asc';

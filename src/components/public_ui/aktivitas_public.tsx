@@ -3,7 +3,6 @@ import {
     useAktivitasList,
     useAktivitasLoading,
     useAktivitasError,
-    useGetAktivitas,
     useClearAktivitasError
 } from "@/store/aktivitas_store";
 import { useSelectedKelas } from "@/store/kelas_store";
@@ -20,27 +19,12 @@ export function AktivitasPublic() {
     const aktivitasList = useAktivitasList();
     const loading = useAktivitasLoading();
     const error = useAktivitasError();
-    const getAktivitas = useGetAktivitas();
     const clearError = useClearAktivitasError();
 
     // Set isClient setelah component mount (client-side only)
     useEffect(() => {
         setIsClient(true);
     }, []);
-
-    // Load aktivitas when component mounts or selectedKelas changes
-    useEffect(() => {
-        if (isClient) {
-            if (selectedKelas?.id) {
-                // Load aktivitas for specific kelas
-                getAktivitas(selectedKelas.slug);
-                console.log(selectedKelas);
-            } else {
-                // Load all aktivitas if no specific kelas
-                getAktivitas();
-            }
-        }
-    }, [selectedKelas?.id, selectedKelas?.slug, selectedKelas, getAktivitas, isClient]);
 
     // Clear error when component unmounts
     useEffect(() => {
@@ -66,11 +50,7 @@ export function AktivitasPublic() {
                 <p className="text-center">{error}</p>
                 <button
                     onClick={() => {
-                        if (isClient && selectedKelas?.id) {
-                            getAktivitas(selectedKelas.slug);
-                        } else {
-                            getAktivitas();
-                        }
+                        window.location.reload();
                     }}
                     className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
                 >

@@ -167,6 +167,32 @@ export const useKelasStore = create<KelasStore>((set) => ({
             });
 
             if (!response.ok) {
+                if (response.status === 400) {
+                    // Handle validation errors from API
+                    const errorData = await response.json();
+                    console.log('Validation errors:', errorData);
+
+                    // Check for slug conflict error
+                    if (errorData.slug && Array.isArray(errorData.slug)) {
+                        const slugError = errorData.slug[0];
+                        if (slugError.includes('already exists')) {
+                            throw new Error(`Kode kelas '${slug}' sudah digunakan. Silakan gunakan kode yang berbeda.`);
+                        }
+                        throw new Error(`Kode kelas: ${slugError}`);
+                    }
+
+                    // Handle other validation errors
+                    const errorMessages = [];
+                    for (const [field, messages] of Object.entries(errorData)) {
+                        if (Array.isArray(messages)) {
+                            errorMessages.push(`${field}: ${messages.join(', ')}`);
+                        } else {
+                            errorMessages.push(`${field}: ${messages}`);
+                        }
+                    }
+
+                    throw new Error(errorMessages.length > 0 ? errorMessages.join('\n') : 'Validation error occurred');
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 

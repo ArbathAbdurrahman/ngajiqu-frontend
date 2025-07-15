@@ -4,8 +4,6 @@ import { IconButton, Message, useToaster } from "rsuite";
 import {
     useAktivitasList,
     useAktivitasLoading,
-    useAktivitasError,
-    useGetAktivitas,
     useDeleteAktivitas,
     useClearAktivitasError
 } from "@/store/aktivitas_store";
@@ -15,9 +13,6 @@ import { MyModal } from "@/components/global_ui/my_modal";
 export function AktivitasBuilder() {
     const toaster = useToaster();
 
-    // Get selected kelas from global state
-    const selectedKelas = useSelectedKelas();
-
     // State untuk mencegah hydration mismatch
     const [isClient, setIsClient] = useState(false);
 
@@ -26,11 +21,10 @@ export function AktivitasBuilder() {
     const [aktivitasToDelete, setAktivitasToDelete] = useState<{ id: string, nama: string } | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // Get aktivitas store data and actions
+    // Global state selectors (data sudah di-load oleh layout)
+    const selectedKelas = useSelectedKelas();
     const aktivitasList = useAktivitasList();
     const loading = useAktivitasLoading();
-    const error = useAktivitasError();
-    const getAktivitas = useGetAktivitas();
     const deleteAktivitas = useDeleteAktivitas();
     const clearError = useClearAktivitasError();
 
@@ -38,20 +32,6 @@ export function AktivitasBuilder() {
     useEffect(() => {
         setIsClient(true);
     }, []);
-
-    // Load aktivitas when component mounts or selectedKelas changes
-    useEffect(() => {
-        if (isClient) {
-            if (selectedKelas?.id) {
-                // Load aktivitas for specific kelas
-                getAktivitas(selectedKelas.slug);
-                console.log(selectedKelas);
-            } else {
-                // Load all aktivitas if no specific kelas
-                getAktivitas();
-            }
-        }
-    }, [selectedKelas?.id, selectedKelas, getAktivitas, isClient]);
 
     // Clear error when component unmounts
     useEffect(() => {
@@ -110,26 +90,7 @@ export function AktivitasBuilder() {
         );
     }
 
-    // Show error state
-    if (error) {
-        return (
-            <div className="flex flex-col items-center justify-center p-8 text-red-500">
-                <p className="text-center">{error}</p>
-                <button
-                    onClick={() => {
-                        if (isClient && selectedKelas?.id) {
-                            getAktivitas(selectedKelas.slug);
-                        } else {
-                            getAktivitas();
-                        }
-                    }}
-                    className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                >
-                    Coba Lagi
-                </button>
-            </div>
-        );
-    }
+
 
     // Show empty state
     if (aktivitasList.length === 0) {
