@@ -166,7 +166,7 @@ export function AddKartuOverlay({ isOpen, onClose }: AddKartuOverlayProps) {
 
                     <MyTextArea
                         title="Catatan"
-                        required={false}
+                        required={true}
                         placeholder="Masukkan Catatan"
                         onChange={(event) => {
                             setFormData({ ...formData, catatan: event.target.value });
@@ -178,7 +178,7 @@ export function AddKartuOverlay({ isOpen, onClose }: AddKartuOverlayProps) {
                         isLoading={loading}
                         type="submit"
                         width="w-full"
-                        disabled={loading || !formData.bab.trim() || !formData.halaman.trim() || !formData.pengampu.trim() || !selectedSantri}
+                        disabled={loading || !selectedSantri}
                     >
                         {loading ? 'Menambahkan...' : 'Tambah Kartu'}
                     </FilledButton>
