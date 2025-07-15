@@ -374,6 +374,8 @@ export const useAuthStore = create<AuthStore>()(
 
             initializeAuth: async () => {
                 try {
+                    set({ isLoading: true, error: null });
+
                     let { accessToken, refreshToken } = get();
 
                     // If no tokens in state, try to get from localStorage
@@ -393,28 +395,129 @@ export const useAuthStore = create<AuthStore>()(
 
                     // If still no tokens, return early
                     if (!accessToken || !refreshToken) {
+                        set({ isLoading: false });
                         return;
                     }
 
-                    // Try to refresh tokens to validate current session
-                    await get().refreshTokens();
+                    // Validate access token first by making a test API call
+                    console.log('🔐 Validating access token...');
+                    const testResponse = await fetch(`${API_BASE_URL}/akun/`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    if (testResponse.ok) {
+                        // Access token is valid, get user data
+                        const userData = await testResponse.json();
+                        set({
+                            userProfile: userData,
+                            user: {
+                                id: userData.user.username, // Use username as ID since API doesn't provide separate ID
+                                username: userData.user.username,
+                                email: userData.user.email,
+                                name: `${userData.user.first_name} ${userData.user.last_name}`.trim(),
+                                description: userData.description,
+                            },
+                            isAuth: true,
+                            isLoading: false,
+                            error: null,
+                        });
+                        console.log('✅ Access token is valid, user authenticated');
+                        return;
+                    }
+
+                    // Access token is invalid, try to refresh
+                    console.log('⚠️ Access token invalid, attempting refresh...');
+                    const refreshResponse = await fetch(`${API_BASE_URL}/akun/refresh`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${refreshToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    if (!refreshResponse.ok) {
+                        console.log('❌ Refresh token also invalid, clearing auth state');
+                        throw new Error('Both access and refresh tokens are invalid');
+                    }
+
+                    // Refresh successful, get new tokens
+                    const refreshData = await refreshResponse.json();
+                    const newAccessToken = refreshData.access;
+                    const newRefreshToken = refreshData.refresh;
+
+                    // Update state with new tokens
+                    set({
+                        accessToken: newAccessToken,
+                        refreshToken: newRefreshToken,
+                        isAuth: true,
+                        isLoading: false,
+                        error: null,
+                    });
+
+                    // Update localStorage and cookies with new tokens
+                    if (newAccessToken) {
+                        localStorage.setItem('accessToken', newAccessToken);
+                        setCookie('accessToken', newAccessToken);
+                    }
+                    if (newRefreshToken) {
+                        localStorage.setItem('refreshToken', newRefreshToken);
+                        setCookie('refreshToken', newRefreshToken);
+                    }
+
+                    // Get user data with new access token
+                    const userResponse = await fetch(`${API_BASE_URL}/akun/`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${newAccessToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    if (userResponse.ok) {
+                        const userData = await userResponse.json();
+                        set((state) => ({
+                            userProfile: userData,
+                            user: {
+                                id: userData.user.username,
+                                username: userData.user.username,
+                                email: userData.user.email,
+                                name: `${userData.user.first_name} ${userData.user.last_name}`.trim(),
+                                description: userData.description,
+                            },
+                            isAuth: true,
+                        }));
+                        console.log('✅ Token refreshed successfully, user authenticated');
+                    }
 
                 } catch (error) {
-                    console.error('Auth initialization failed:', error);
-                    // Clear auth state if initialization fails
+                    console.error('❌ Auth initialization failed:', error);
+
+                    // Clear all auth state and storage on any failure
                     set({
                         user: null,
                         accessToken: null,
                         refreshToken: null,
                         isAuth: false,
+                        isLoading: false,
                         error: null,
+                        userProfile: null,
                     });
 
                     // Clear localStorage and cookies
-                    localStorage.removeItem('accessToken');
-                    localStorage.removeItem('refreshToken');
+                    if (typeof window !== 'undefined') {
+                        localStorage.removeItem('accessToken');
+                        localStorage.removeItem('refreshToken');
+                        localStorage.removeItem('selectedKelas');
+                        localStorage.removeItem('selectedSantri');
+                    }
                     removeCookie('accessToken');
                     removeCookie('refreshToken');
+
+                    console.log('🔄 Auth state cleared due to invalid tokens');
                 }
             },
 
