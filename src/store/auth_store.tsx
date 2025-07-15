@@ -479,7 +479,7 @@ export const useAuthStore = create<AuthStore>()(
 
                     if (userResponse.ok) {
                         const userData = await userResponse.json();
-                        set((state) => ({
+                        set(() => ({
                             userProfile: userData,
                             user: {
                                 id: userData.user.username,
